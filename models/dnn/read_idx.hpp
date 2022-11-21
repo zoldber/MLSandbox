@@ -99,7 +99,7 @@ namespace idx {
 
                 const std::string minimalSuffix = ".idx";
 
-                auto suffix = path.find('.');
+                auto suffix = path.find(minimalSuffix);
 
                 // chars from '.' are too few to be valid
                 if ((path.size() - suffix) < (minimalSuffix.size() + 1)) { return 0; }
@@ -117,17 +117,28 @@ namespace idx {
 
             Set(const std::string filePath) {
 
-                std::cout << "-- reading: '" << filePath << "'" << std::endl;
+                std::cout << "-+- reading: '" << filePath << "'" << std::endl;
 
                 int N = parseSuffix(filePath);
 
-                if ((N < 1) || (N > 3)) exit(EXIT_FAILURE);
+                if ((N < 1) || (N > 3)) {
+
+                    std::cout << " '--- parsed item dimension: " << N << ", exit failure" << std::endl;
+
+                    exit(EXIT_FAILURE);
+
+                }
 
                 std::ifstream file;
                 
                 file.open(filePath, std::ios::in | std::ios::binary);
 
-                if (!file.is_open()) exit(EXIT_FAILURE);
+                if (!file.is_open()) {
+
+                    std::cout << " '--- failed to open, exit failure" << std::endl;
+                    
+                    exit(EXIT_FAILURE);
+                }
 
                 auto buff32 = new AutoEndianBuffer<uint32_t>();
 
@@ -195,6 +206,20 @@ namespace idx {
                     */
 
                 }
+
+                size_t allocSize = I * R * C * sizeof(dataType);
+
+                const std::string sizes[4] = { " bytes\n", " KB\n", " MB\n", " GB\n" };
+
+                for (i = 0; (i < sizes->size()) && (allocSize / 1000); i++) {
+
+                    allocSize /= 1000;
+
+                }
+
+                std::cout << " '--- allocated " << allocSize << sizes[i] << std::endl;
+
+                return;
 
             }
 
