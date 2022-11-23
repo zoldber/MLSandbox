@@ -6,6 +6,8 @@
 
 int main() {
 
+    /*
+
     auto trainingImages = new idx::Set<unsigned char>(TRAIN_PATH);
     auto trainingLabels = new idx::Set<unsigned char>(LABEL_PATH);
 
@@ -16,6 +18,13 @@ int main() {
     I = std::get<0>(dims);
     R = std::get<1>(dims);
     C = std::get<2>(dims);
+
+    */
+
+    float ** samples = {
+
+
+    };
 
     std::vector<size_t> layerDims = {4, 5, 3, 2};
 

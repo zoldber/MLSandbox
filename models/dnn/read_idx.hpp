@@ -117,7 +117,7 @@ namespace idx {
 
             Set(const std::string filePath) {
 
-                std::cout << "-+- reading: '" << filePath << "'" << std::endl;
+                std::cout << "-+- reading: \"" << filePath << "\"" << std::endl;
 
                 int N = parseSuffix(filePath);
 
@@ -209,7 +209,7 @@ namespace idx {
 
                 size_t allocSize = I * R * C * sizeof(dataType);
 
-                const std::string sizes[4] = { " bytes\n", " KB\n", " MB\n", " GB\n" };
+                const std::string sizes[4] = { " bytes", " KB", " MB", " GB" };
 
                 for (i = 0; (i < sizes->size()) && (allocSize / 1000); i++) {
 
@@ -217,7 +217,8 @@ namespace idx {
 
                 }
 
-                std::cout << " '--- allocated " << allocSize << sizes[i] << std::endl;
+                std::cout << " '--- allocated " << allocSize << sizes[i];
+                std::cout << " for " << I << " [ " << R << " x " << C << " ] items.\n"<< std::endl;
 
                 return;
 
