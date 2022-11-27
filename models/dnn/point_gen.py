@@ -18,7 +18,7 @@ plt.plot(bx, by)
 
 # generate random points and label by position
 # relative to the boundary defined above
-list_size = 100
+list_size = 1000
 
 samples = []
 labels = []
@@ -35,7 +35,8 @@ for _ in range(list_size):
     samples.append((x, y))
     labels.append(label)
 
-    plt.scatter(x, y, color='green' if label[0] else 'blue')
+    # if list_size < 200:
+    #     plt.scatter(x, y, color='green' if label[0] else 'blue')
 
 # show plot before writing to csv
 plt.show()

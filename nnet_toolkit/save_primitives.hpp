@@ -4,71 +4,12 @@
 #include <tuple>
 #include <cmath>
 
-#define LEARN_RATE 0.05
-#define H 0.001
+#define LEARN_RATE 1.1
+#define H 0.0025
 
 namespace nnet {    
 
-    // each gradient simply contains a weight matrix (W), bias vector (b) equal in dim
-    // to its corresponding layer during training. The gradient class is isolated from
-    // the layer class because the latter need only store its W and b during execution
-    template<class fp>
-    class Gradient {
-
-        private:
-
-        public:
-
-            size_t inpSize;
-            size_t outSize;
-
-            // stores result of partial deriv computation during fitting by back-propagation
-            fp * backPropVector;
-
-            fp ** W;
-            fp * b;
-
-            // randomize gradient on init.
-            Gradient(size_t inp, size_t out) {
-
-                inpSize = inp;
-                outSize = out;
-
-                backPropVector = new fp[out]();
-
-                W = new fp * [inp]();
-
-                for (size_t i = 0; i < inp; i++) W[i] = new fp[out]();
-
-                b = new fp[out]();
-
-            }
-
-            void reset(void) {
-
-                size_t inpNode, outNode;
-
-                for (outNode = 0; outNode < outSize; outNode++) {
-                    
-                    b[outNode] = 0.0;
-
-                }
-
-                for (inpNode = 0; inpNode < inpSize; inpNode++) {
-
-                    for (outNode = 0; outNode < outSize; outNode++) {
-
-                        W[inpNode][outNode] = 0.0;
-
-                    }
-
-                }
-
-            }
-
-    };
-
-
+    // note: template typename is for floating-point representation of data
     template<class fp>
     class Layer {
 
@@ -128,7 +69,7 @@ namespace nnet {
 
             void randomizeWeights(int seed) {
 
-                std::srand(time(0));
+                std::srand(seed);
 
                 size_t inpNode, outNode;
 
@@ -149,39 +90,16 @@ namespace nnet {
 
             }
 
-            // apply partial derivative vector caclulated durin back prop to gradient
-            // TODO: see UpdateGradients for better documentation
-            void applyDerivativeVector(void) {
-
-                size_t inpNode, outNode;
-
-                // layer's derivative of cost with respect to weight (updated for each node)
-                fp d_cost;
-
-                for (outNode = 0; outNode < outSize; outNode++) {
-
-                    for (inpNode = 0; inpNode < inpSize; inpNode++) {
-
-                        d_cost = gradient->backPropVector[outNode] * inputValues[inpNode];
-
-                        gradient->W[inpNode][outNode] += d_cost;
-
-                    }
-
-                }
-
-            }
-
         public:
-
-            Gradient<fp> * gradient;
 
             size_t inpSize;
             size_t outSize;
 
-            // store and save these for computation of gradients via back-prop
-            fp * inputValues;
+            // store and save this for computation of gradients
             fp * inpWeighted;
+
+            // note: allocate this as a buffer on init to avoid memory leaks when training
+            // (allocate once, fill on each call to eval() and return the same pointer)
             fp * activations;
 
             fp ** W;
@@ -198,13 +116,11 @@ namespace nnet {
 
                 b = new fp[out]();
 
-                inputValues = new fp[inp]();
                 inpWeighted = new fp[out]();
+
                 activations = new fp[out]();
 
                 randomizeWeights(time(0));
-
-                gradient = new Gradient<fp>(inp, out);
 
             }
 
@@ -215,37 +131,67 @@ namespace nnet {
                 // buffer
                 fp n = 0;
 
-                std::memcpy(inputValues, input, inpSize * sizeof(fp));
-
                 for (outNode = 0; outNode < outSize; outNode++) {
 
                     for (inpNode = 0; inpNode < inpSize; inpNode++) {
 
-                        n += (inputValues[inpNode] * W[inpNode][outNode]);
+                        n += (input[inpNode] * W[inpNode][outNode]);
 
                     }
 
-                    inpWeighted[outNode] = n + b[outNode];
-
-                    activations[outNode] = sigmoid(inpWeighted[outNode]);
+                    activations[outNode] = sigmoid(n + b[outNode]);
 
                 }
 
                 return activations;
 
             }
+            
+    };
 
-            void applyGradient(void) {
+    // each gradient simply contains a weight matrix (W), bias vector (b) equal in dim
+    // to its corresponding layer during training. The gradient class is isolated from
+    // the layer class because the latter need only store its W and b during execution
+    template<class fp>
+    class Gradient {
+
+        private:
+
+        public:
+
+            size_t inpSize;
+            size_t outSize;
+
+            fp ** W;
+            fp * b;
+
+            // randomize gradient on init.
+            Gradient(size_t inp, size_t out) {
+
+                inpSize = inp;
+                outSize = out;
+
+                W = new fp * [inp]();
+
+                for (size_t i = 0; i < inp; i++) W[i] = new fp[out]();
+
+                b = new fp[out]();
+
+            }
+
+            // pass this method a layer during gradient descent to update
+            // weights / biases using their corresponding cost gradient values
+            void applyToLayer(Layer<fp> * layer) {
 
                 size_t inpNode, outNode;
 
                 for (outNode = 0; outNode < outSize; outNode++) {
 
-                    b[outNode] -= (gradient->b[outNode] * LEARN_RATE);
+                    layer->b[outNode] -= (b[outNode] * LEARN_RATE);
 
                     for (inpNode = 0; inpNode < inpSize; inpNode++) {
 
-                        W[inpNode][outNode] -= (gradient->W[inpNode][outNode] * LEARN_RATE);
+                        layer->W[inpNode][outNode] -= (W[inpNode][outNode] * LEARN_RATE);
 
                     }
 
@@ -253,57 +199,6 @@ namespace nnet {
 
             }
 
-            void updateOutputCostDerivative(fp * label) {
-
-                size_t node;
-
-                // partial derivatives of output layer's cost/actv and actv/inpWeighted
-                fp d_cost, d_activation;
-
-                for (node = 0; node < outSize; node++) {
-
-                    d_cost = d_nodeCost(activations[node], label[node]);
-                    d_activation = d_sigmoid(inpWeighted[node]);
-
-                    gradient->backPropVector[node] = d_cost * d_activation;
-
-                }
-
-                applyDerivativeVector();
-
-            }
-
-            void updateHiddenLayerCostDerivative(Layer<fp> * lastLayer) {
-
-                // new node index, old node index
-                size_t nni, oni;
-
-                fp newNodeValue, d_inpWeighted;
-
-                for (nni = 0; nni < outSize; nni++) {
-
-                    newNodeValue = 0;
-
-                    for (oni = 0; oni < lastLayer->outSize; oni++) {
-
-                        d_inpWeighted = lastLayer->W[nni][oni];
-
-                        newNodeValue += (d_inpWeighted * lastLayer->gradient->backPropVector[oni]);
-
-                    }
-
-                    newNodeValue *= d_sigmoid(inpWeighted[nni]);
-
-                    gradient->backPropVector[nni] = newNodeValue;
-
-                }
-
-                applyDerivativeVector();
-
-            }
-
-
-            
     };
 
     template<class fp>
@@ -312,6 +207,7 @@ namespace nnet {
         private:
 
             std::vector<Layer<fp> *> layers;
+            std::vector<Gradient<fp> *> gradients;
 
             size_t sizeInp;
             size_t sizeOut;
@@ -364,6 +260,7 @@ namespace nnet {
                     out = dimensions[i+1];
 
                     layers.push_back(new Layer<fp>(inp, out));
+                    gradients.push_back(new Gradient<fp>(inp, out));
 
                 }
 
@@ -445,10 +342,10 @@ namespace nnet {
 
             }
 
-            // runs all samples through network and updates weights via
-            // exhaustive gradient descent and returns average cost of
+            // runs all samples through network and updates weights via naive
+            // (i.e. exhaustive) gradient descent and returns average cost of
             // entire sample set after an iteration of training
-            fp fitSimple(fp ** samples, fp ** labels, size_t sampleCount) {
+            fp fitNaive(fp ** samples, fp ** labels, size_t sampleCount) {
 
                 // point span of tangent during gradient descent; as lim(h->0)
                 // (f(x + h) - f(x)) / (h) approaches f'(x) for a given x
@@ -461,11 +358,12 @@ namespace nnet {
 
                 size_t inpNode, outNode, bias;
 
+                assert(layers.size() == gradients.size());
+
                 // update all gradients
                 for (l = 0; l < L; l++) {
 
-                    // determine cost gradient[i] for layer[i]'s weight matrix using a cost function
-                    // nudge of span H to approximate the local slope and update gradient
+                    // determine cost gradient[i] for layer[i]'s weight matrix
                     for (inpNode = 0; inpNode < sizeInp; inpNode++) {
 
                         for (outNode = 0; outNode < sizeOut; outNode++) {
@@ -476,13 +374,13 @@ namespace nnet {
 
                             layers[l]->W[inpNode][outNode] -= H;
                             
-                            layers[l]->gradient->W[inpNode][outNode] = costDiff / H;
+                            gradients[l]->W[inpNode][outNode] = costDiff / H;
 
                         }
 
                     }
 
-                    // same as above but exclusively for the layer's bias vector
+                    // determine cost gradient[i] for layer[i]'s bias vector
                     for (bias = 0; bias < sizeOut; bias++) {
 
                         layers[l]->b[bias] += H;
@@ -491,7 +389,7 @@ namespace nnet {
 
                         layers[l]->b[bias] -= H;
 
-                        layers[l]->gradient->b[bias] = costDiff / H;
+                        gradients[l]->b[bias] = costDiff / H;
 
                     }
 
@@ -500,7 +398,7 @@ namespace nnet {
                 // apply all newly-updated gradients to their respective layers
                 for (l = 0; l < L; l++) {
                     
-                    layers[l]->applyGradient();
+                    gradients[l]->applyToLayer(layers[l]);
 
                 }
 
@@ -510,43 +408,17 @@ namespace nnet {
 
             // run all samples through network and update weights via gradient descent,
             // but use back propagation of partial derivatives in each layer 
-            void fitBackProp(fp ** samples, fp ** labels, size_t sampleCount) {
+            fp fitViaBackPropagation(fp * sample, fp * label) {
 
-                Layer<fp> * outLayer = layers.back();
+                
 
-                int h;  // keep this an int, size_t is unsigned and never < 0 (see while below)
-
-                for (size_t i = 0; i < sampleCount; i++) {
-
-                    // fill layers
-                    feed(samples[i]);
-
-                    outLayer->updateOutputCostDerivative(labels[i]);
-
-                    h = layers.size() - 2;
-
-                    // for all hidden layers
-                    while (h --> 0) {
-
-                        layers.at(h)->updateHiddenLayerCostDerivative(layers.at(h + 1));
-
-                    }
-
-                }
-
-                // apply all newly-updated gradients to their respective layers
-                for (size_t l = 0; l < layers.size(); l++) {
-                    
-                    layers[l]->applyGradient();
-
-                    layers[l]->gradient->reset();
-
-                }
-
-                return;
+                return 0.0;
 
             }
 
+
+
     };
+
 
 }
