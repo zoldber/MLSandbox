@@ -5,46 +5,69 @@ import matplotlib.pyplot as plt
 # boundary function
 def f(x):
 
-    val = 0.02*(x**3) - 0.15*(x**2) - x + 8
+    val = 0.02*(x**3) - 0.35*(x**2) + x + 8.0
 
-    return min(max(val, 0), 15)
+    return min(max(val, 0), 16)
 
 
-bx = [x for x in range(16)]
-by = list(map(f, bx))
+def g(x):
 
-# plot boundary function
-plt.plot(bx, by)
+    val = 8.0 + ((6.0 - (0.75 * x))**2)
+
+    return min(max(val, 0), 16)
+
+X = [xi for xi in range(17)]
+F = list(map(f, X))
+G = list(map(g, X))
+
+# plot boundary functions
+plt.plot(X, F)
+plt.plot(X, G)
+
 
 # generate random points and label by position
 # relative to the boundary defined above
-list_size = 1000
+listSize = 16000
 
 samples = []
 labels = []
 
-for _ in range(list_size):
-    x = random() * 15.0
-    y = random() * 15.0
+for _ in range(listSize):
+    x = random() * 16.0
+    y = random() * 16.0
 
-    if y > f(x):
-        label = (1.0, 0.0)
+    if y > g(x):
+        label = [1.0, 0.0, 0.0]
+    elif y > f(x):
+        label = [0.0, 1.0, 0.0]
     else:
-        label = (0.0, 1.0)
+        label = [0.0, 0.0, 1.0]
 
-    samples.append((x, y))
+    samples.append([x, y])
     labels.append(label)
 
-    # if list_size < 200:
-    #     plt.scatter(x, y, color='green' if label[0] else 'blue')
+if listSize <= 100:
+
+    colors = ['orange', 'green', 'blue']
+
+    numPoints = len(samples)
+
+    for i in range(numPoints):
+
+        plt.scatter(
+                    x=samples[i][0], 
+                    y=samples[i][1],
+                    color=colors[labels[i].index(1.0)]
+                    )
+
 
 # show plot before writing to csv
 plt.show()
 
-with open('samples.csv', 'w') as f:
+with open('test_data/samples.csv', 'w') as f:
     for sample in samples:
         f.write(f'{sample[0]}, {sample[1]}\n')
 
-with open('labels.csv', 'w') as f:
+with open('test_data/labels.csv', 'w') as f:
     for label in labels:
-        f.write(f'{label[0]}, {label[1]}\n')
+        f.write(f'{label[0]}, {label[1]}, {label[2]}\n')

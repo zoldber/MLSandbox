@@ -4,8 +4,8 @@
 #include <tuple>
 #include <cmath>
 
-#define LEARN_RATE 0.05
-#define H 0.001
+#define LEARN_RATE 0.005
+#define H 0.001 // NOTE: this hyperparameter is used *only* in the naive fit method
 
 namespace nnet {    
 
@@ -128,7 +128,7 @@ namespace nnet {
 
             void randomizeWeights(int seed) {
 
-                std::srand(time(0));
+                std::srand(seed);
 
                 size_t inpNode, outNode;
 
@@ -149,24 +149,29 @@ namespace nnet {
 
             }
 
-            // apply partial derivative vector caclulated durin back prop to gradient
-            // TODO: see UpdateGradients for better documentation
+            // apply partial derivative vector caclulated during back prop to gradient
             void applyDerivativeVector(void) {
 
                 size_t inpNode, outNode;
 
                 // layer's derivative of cost with respect to weight (updated for each node)
-                fp d_cost;
+                fp d_costW, d_costB;
 
                 for (outNode = 0; outNode < outSize; outNode++) {
 
+                    // update weights
                     for (inpNode = 0; inpNode < inpSize; inpNode++) {
 
-                        d_cost = gradient->backPropVector[outNode] * inputValues[inpNode];
+                        d_costW = gradient->backPropVector[outNode] * inputValues[inpNode];
 
-                        gradient->W[inpNode][outNode] += d_cost;
+                        gradient->W[inpNode][outNode] += d_costW;
 
                     }
+
+                    // update biases
+                    d_costB = 1.0 * gradient->backPropVector[outNode];
+
+                    gradient->b[outNode] += d_costB;
 
                 }
 
@@ -184,6 +189,9 @@ namespace nnet {
             fp * inpWeighted;
             fp * activations;
 
+            fp ** bestWeights;
+            fp * bestBiases;
+
             fp ** W;
             fp * b;
 
@@ -194,9 +202,19 @@ namespace nnet {
 
                 W = new fp * [inp]();
 
-                for (size_t i = 0; i < inp; i++) W[i] = new fp[out]();
+                bestWeights = new fp * [inp]();
+
+                for (size_t i = 0; i < inp; i++) {
+                    
+                    W[i] = new fp[out]();
+
+                    bestWeights[i] = new fp[out]();
+
+                }
 
                 b = new fp[out]();
+
+                bestBiases = new fp[out]();
 
                 inputValues = new fp[inp]();
                 inpWeighted = new fp[out]();
@@ -241,13 +259,15 @@ namespace nnet {
 
                 for (outNode = 0; outNode < outSize; outNode++) {
 
-                    b[outNode] -= (gradient->b[outNode] * LEARN_RATE);
-
+                    // apply weights
                     for (inpNode = 0; inpNode < inpSize; inpNode++) {
 
                         W[inpNode][outNode] -= (gradient->W[inpNode][outNode] * LEARN_RATE);
 
                     }
+
+                    // apply biases
+                    b[outNode] -= (gradient->b[outNode] * LEARN_RATE);
 
                 }
 
@@ -302,6 +322,46 @@ namespace nnet {
 
             }
 
+            void saveLayerAsBest(void) {
+
+                size_t inpNode, outNode;
+
+                for (outNode = 0; outNode < outSize; outNode++) {
+
+                    // save weights
+                    for (inpNode = 0; inpNode < inpSize; inpNode++) {
+
+                        bestWeights[inpNode][outNode] = W[inpNode][outNode];
+
+                    }
+
+                    // save biases
+                    bestBiases[outNode] = b[outNode];
+
+                }
+
+            }
+
+            void recallBestLayer(void) {
+
+                size_t inpNode, outNode;
+
+                for (outNode = 0; outNode < outSize; outNode++) {
+
+                    // save weights
+                    for (inpNode = 0; inpNode < inpSize; inpNode++) {
+
+                        W[inpNode][outNode] = bestWeights[inpNode][outNode];
+
+                    }
+
+                    // save biases
+                    b[outNode] = bestBiases[outNode];
+
+                }
+
+            }
+
 
             
     };
@@ -318,39 +378,8 @@ namespace nnet {
 
             fp * outputActivation;
 
-            fp * calcOutputLayerCostPD(Layer<fp> * layer, fp * expected) {
-
-                fp * res = new fp[layer->outSize];
-
-                fp d_cost, d_actv;
-
-                for (int i = 0; i < layer->outSize; i++) {
-
-                    d_cost = layer->d_nodeCost(layer->activations[i], expected[i]);
-                    d_actv = layer->d_sigmoid(layer->inpWeighted[i]);
-
-
-                }
-
-            }
-
-            void updateAllGradients(fp * sample, fp * label) {
-
-                // this fills every layer's weight matrix, biases, activation vals, etc.
-                feed(sample);
-
-                auto outputLayer = layers.back();
-
-                // NOTE: he calls this "nodeValues" but it's the product: {da2/dz2} x {dc/da2} = dc/dz2
-                fp * outputLayerCostPD = calcOutputLayerCostPD(outputLayer, label);
-
-            }
-
-
-
         public:
 
-            // use this constructor for training (populate gradients)
             Network(const std::vector<size_t> dimensions) {
 
                 sizeInp = dimensions.front();
@@ -523,10 +552,12 @@ namespace nnet {
 
                     outLayer->updateOutputCostDerivative(labels[i]);
 
-                    h = layers.size() - 2;
+                    h = layers.size() - 1; // recall that the first "layer" in the nnet isn't actually a class: layer
 
                     // for all hidden layers
                     while (h --> 0) {
+
+                        //std::cout << "curr: inpSize=" << layers.at(h)->inpSize << ", outSize=" << layers.at(h)->outSize << std::endl;
 
                         layers.at(h)->updateHiddenLayerCostDerivative(layers.at(h + 1));
 
@@ -539,6 +570,10 @@ namespace nnet {
                     
                     layers[l]->applyGradient();
 
+                    // TODO: add a best-cost-based gradient saving mechanism here
+                    // since the back-propagation training method resets gradients
+                    // after a batch fit anyway
+
                     layers[l]->gradient->reset();
 
                 }
@@ -546,6 +581,37 @@ namespace nnet {
                 return;
 
             }
+
+            fp classifierAccuracy(fp ** samples, fp ** labels, size_t sampleCount) {
+
+                fp correct = 0.0, possible = (fp)sampleCount;
+
+                int prediction;
+
+                for (size_t i = 0; i < sampleCount; i++) {
+
+                    prediction = predict(samples[i]);
+
+                    if (labels[i][prediction] == 1.0) correct += 1.0;
+
+                }
+
+                return correct / possible;
+
+            }
+
+            void saveLayersAsBest(void) {
+
+                for (auto layer : layers) layer->saveLayerAsBest();
+
+            }
+
+            void recallBestLayers(void) {
+
+                for (auto layer : layers) layer->recallBestLayer();
+
+            }
+
 
     };
 
