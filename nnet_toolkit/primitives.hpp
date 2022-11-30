@@ -1,13 +1,16 @@
+#include "activation_functions.hpp"
 #include <iostream>
 #include <assert.h>
 #include <time.h>   // supports srand(time(0)), as called in Layer contructor
 #include <tuple>
-#include <cmath>
 
 #define LEARN_RATE 0.005
 #define H 0.001 // NOTE: this hyperparameter is used *only* in the naive fit method
 
 namespace nnet {    
+
+    // { layer size, activation function }
+    typedef struct {size_t n; ActivationTypes afn; } layer_t;
 
     // each gradient simply contains a weight matrix (W), bias vector (b) equal in dim
     // to its corresponding layer during training. The gradient class is isolated from
@@ -68,49 +71,10 @@ namespace nnet {
 
     };
 
-
     template<class fp>
     class Layer {
 
         private:
-
-            fp relu(fp x) {
-
-                return std::max((fp)0.0, x);
-
-            }
-
-            fp d_relu(fp x) {
-
-                return (x > 0.0) ? 1.0 : 0.0;
-
-            }
-
-            fp sigmoid(fp x) { 
-            
-                return 1.0 / (1.0 + std::exp(-x)); 
-                
-            }
-
-            fp d_sigmoid(fp x) {
-
-                fp s = sigmoid(x);
-
-                return s * (1.0 - s);
-
-            }
-
-            fp fastSigmoid(fp x) {
-
-                return x / (1.0 + std::abs(x));
-
-            }
-
-            fp d_fastSigmoid(fp x) { 
-                
-                return 0.0; // TODO: fix me
-                
-            }
 
             fp nodeCost(fp output, fp expected) {
 
@@ -179,6 +143,8 @@ namespace nnet {
 
         public:
 
+            Activation<fp> * activation;
+
             Gradient<fp> * gradient;
 
             size_t inpSize;
@@ -195,7 +161,7 @@ namespace nnet {
             fp ** W;
             fp * b;
 
-            Layer(size_t inp, size_t out) {
+            Layer(size_t inp, size_t out, ActivationTypes afn) {
 
                 inpSize = inp;
                 outSize = out;
@@ -224,6 +190,8 @@ namespace nnet {
 
                 gradient = new Gradient<fp>(inp, out);
 
+                activation = new Activation<fp>(afn);
+
             }
 
             fp * evaluate(fp * input) {
@@ -245,7 +213,7 @@ namespace nnet {
 
                     inpWeighted[outNode] = n + b[outNode];
 
-                    activations[outNode] = sigmoid(inpWeighted[outNode]);
+                    activations[outNode] = activation->function(inpWeighted[outNode]);
 
                 }
 
@@ -283,7 +251,7 @@ namespace nnet {
                 for (node = 0; node < outSize; node++) {
 
                     d_cost = d_nodeCost(activations[node], label[node]);
-                    d_activation = d_sigmoid(inpWeighted[node]);
+                    d_activation = activation->derivative(inpWeighted[node]);
 
                     gradient->backPropVector[node] = d_cost * d_activation;
 
@@ -312,7 +280,7 @@ namespace nnet {
 
                     }
 
-                    newNodeValue *= d_sigmoid(inpWeighted[nni]);
+                    newNodeValue *= activation->derivative(inpWeighted[nni]);
 
                     gradient->backPropVector[nni] = newNodeValue;
 
@@ -380,19 +348,21 @@ namespace nnet {
 
         public:
 
-            Network(const std::vector<size_t> dimensions) {
+            //Network(const std::vector<size_t> dimensions) {
 
-                sizeInp = dimensions.front();
-                sizeOut = dimensions.back();
+            Network(const std::vector<layer_t> layerCfg) {
+
+                sizeInp = layerCfg.front().n;
+                sizeOut = layerCfg.back().n;
 
                 size_t inp, out;
 
-                for (size_t i = 0; i < (dimensions.size() - 1); i++) {
+                for (size_t i = 0; i < (layerCfg.size() - 1); i++) {
 
-                    inp = dimensions[i];
-                    out = dimensions[i+1];
+                    inp = layerCfg.at(i).n;
+                    out = layerCfg.at(i+1).n;
 
-                    layers.push_back(new Layer<fp>(inp, out));
+                    layers.push_back( new Layer<fp>(inp, out, layerCfg.at(i).afn) );
 
                 }
 
