@@ -14,34 +14,52 @@
 #define TRAIN_PATH "test_data/samples.csv"
 #define LABEL_PATH "test_data/labels.csv"
 
+using namespace std;
+
+// This just abstracts the data import at the start of main()
+// and tbl_csv.hpp is an entirely unaffiliated library (no
+// dependencies etc, just delete it if data is imported
+// through other means)
+int getData(float ** arr, const string fileName, const char delim) {
+
+    auto table = new DataTable<float>(fileName, delim);
+
+    auto len = table->rowDim();
+
+    arr = table->export2DArray();
+
+    delete table;
+
+    return len;
+
+}
+
 int main(void) {
 
-    auto trainSetTable = new DataTable<float>(TRAIN_PATH, ',');
-    auto labelSetTable = new DataTable<float>(LABEL_PATH, ',');
+    float ** trainSet, ** labelSet;
 
-    assert(labelSetTable->rowDim() == trainSetTable->rowDim());
+    auto lenTrain = getData(trainSet, TRAIN_PATH, ',');
+    auto lenLabel = getData(labelSet, LABEL_PATH, ',');
 
+    assert(lenTrain == lenLabel);
 
-    size_t sampleCount = trainSetTable->rowDim();
+    nnet::layer_t inputLayer    = { 2, nnet::ActivationTypes::sigmoid };
+    nnet::layer_t hiddenLayer   = { 3, nnet::ActivationTypes::sigmoid };
+    nnet::layer_t outputLayer   = { 3, nnet::ActivationTypes::sigmoid };
 
-    auto trainSet = trainSetTable->export2DArray();
-    auto labelSet = labelSetTable->export2DArray();
+    auto layers = {inputLayer, hiddenLayer, outputLayer};
 
-    delete trainSetTable;
-    delete labelSetTable;
+    auto nnet = new nnet::Network<float>(layers);
 
-    std::vector<size_t> layerDims = {2, 3, 3};
-
-    auto nnet = new nnet::Network<float>(layerDims);
 
     // train network
     std::cout.precision(4);
     std::cout << "Pre-fit accuracy:\t"; 
-    std::cout << nnet->classifierAccuracy(trainSet, labelSet, sampleCount) * 100.0 << "%" << std::endl;
+    std::cout << nnet->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
 
     float cost, bestCost = MAXFLOAT;
 
-    size_t randBatch, batchSize = 200, batchMax = sampleCount - batchSize;
+    size_t randBatch, batchSize = 200, batchMax = lenTrain - batchSize;
 
     for (int i = 0; i < 32000; i++) {
 
@@ -51,7 +69,7 @@ int main(void) {
 
         if (i%100==0) {
             
-            cost = nnet->populationCost(trainSet, labelSet, sampleCount);
+            cost = nnet->populationCost(trainSet, labelSet, lenTrain);
 
             if (cost < bestCost) {
 
@@ -68,8 +86,9 @@ int main(void) {
     nnet->recallBestLayers();
 
     std::cout << "Post-fit accuracy:\t"; 
-    std::cout << nnet->classifierAccuracy(trainSet, labelSet, sampleCount) * 100.0 << "%" << std::endl;
+    std::cout << nnet->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
 
     return 0;
+
 
 }
