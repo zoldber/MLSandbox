@@ -13,7 +13,7 @@ Feeding sample features to a network or configuring parameters should be as disc
 
 Network demos in this repo will include custom headers for importing data. This minimizes distraction from network-specific code blocks in the demo program, and all reads are cast as ordinary arrays before being fed into a network. I've also made the repo of each custom import header public for ease of debugging / convenience / reference etc.
 
-= = = = = = = =
+- - -
 
 ### TODO:
 
