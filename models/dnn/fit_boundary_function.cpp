@@ -11,13 +11,13 @@
 // Network libraries
 #include "../../nnet_toolkit/primitives.hpp"
 
+// File paths to training features and labels, respectively
 #define TRAIN_PATH "test_data/samples.csv"
 #define LABEL_PATH "test_data/labels.csv"
 
-using namespace std;
-
 int main(void) {
 
+    // import data and verify equal set length with assert()
     auto features   = new DataTable<float>(TRAIN_PATH, ',');
     auto labels     = new DataTable<float>(LABEL_PATH, ',');
 
@@ -25,21 +25,29 @@ int main(void) {
     float ** labelSet = labels->export2DArray();
 
     size_t lenTrain = features->rowDim();
-
     assert(lenTrain == labels->rowDim());
 
-    nnet::layer_t inputLayer    = { 2, nnet::ActivationTypes::sigmoid };
-    nnet::layer_t hiddenLayer   = { 3, nnet::ActivationTypes::sigmoid };
-    nnet::layer_t outputLayer   = { 3, nnet::ActivationTypes::sigmoid };
+    delete features;
+    delete labels;
 
-    auto layers = {inputLayer, hiddenLayer, outputLayer};
+    // build network by layer as a vector of 'nnet::layer_t' elements,
+    // where type 'nnet::layer_t' defines { layerNeuronCount, layerActivFunc }
+    auto layers = {
+        
+        (nnet::layer_t){ 2, nnet::ActivationTypes::sigmoid },
+        (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid },
+        (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid }     
 
-    auto nnet = new nnet::Network<float>(layers);
+    };
 
-    // train network
-    std::cout.precision(4);
+    // create network and cast layers for handling float
+    // (as opposed to a larger but more precise fp type)
+    auto dnn = new nnet::Network<float>(layers);
+
     std::cout << "Pre-fit accuracy:\t"; 
-    std::cout << nnet->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
+    std::cout << dnn->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
+
+    // Train network with batched inputs and back-propagation
 
     float cost, bestCost = MAXFLOAT;
 
@@ -49,15 +57,15 @@ int main(void) {
 
         randBatch = rand() % batchMax;
 
-        nnet->fitBackProp(&trainSet[randBatch], &labelSet[randBatch], batchSize);
+        dnn->fitBackProp(&trainSet[randBatch], &labelSet[randBatch], batchSize);
 
         if (i%100==0) {
             
-            cost = nnet->populationCost(trainSet, labelSet, lenTrain);
+            cost = dnn->populationCost(trainSet, labelSet, lenTrain);
 
             if (cost < bestCost) {
 
-                nnet->saveLayersAsBest();
+                dnn->saveLayersAsBest();
 
                 bestCost = cost;
 
@@ -67,12 +75,11 @@ int main(void) {
 
     }
 
-    nnet->recallBestLayers();
+    dnn->recallBestLayers();
 
     std::cout << "Post-fit accuracy:\t"; 
-    std::cout << nnet->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
+    std::cout << dnn->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
 
     return 0;
-
 
 }
