@@ -5,7 +5,7 @@
 #include <time.h>   // supports srand(time(0)), as called in Layer contructor
 #include <tuple>
 
-#define LEARN_RATE 0.005
+#define DEFAULT_LEARN_RATE 0.001
 #define H 0.001 // NOTE: this hyperparameter is used *only* in the naive fit method
 
 namespace nnet {    
@@ -222,7 +222,7 @@ namespace nnet {
 
             }
 
-            void applyGradient(void) {
+            void applyGradient(fp learnRate) {
 
                 size_t inpNode, outNode;
 
@@ -231,12 +231,12 @@ namespace nnet {
                     // apply weights
                     for (inpNode = 0; inpNode < inpSize; inpNode++) {
 
-                        W[inpNode][outNode] -= (gradient->W[inpNode][outNode] * LEARN_RATE);
+                        W[inpNode][outNode] -= (gradient->W[inpNode][outNode] * learnRate);
 
                     }
 
                     // apply biases
-                    b[outNode] -= (gradient->b[outNode] * LEARN_RATE);
+                    b[outNode] -= (gradient->b[outNode] * learnRate);
 
                 }
 
@@ -347,11 +347,15 @@ namespace nnet {
 
             fp * outputActivation;
 
+            fp learnRate;
+
         public:
 
             //Network(const std::vector<size_t> dimensions) {
 
             Network(const std::vector<layer_t> layerCfg) {
+
+                learnRate = DEFAULT_LEARN_RATE;
 
                 sizeInp = layerCfg.front().n;
                 sizeOut = layerCfg.back().n;
@@ -373,6 +377,13 @@ namespace nnet {
 
             // use this constructor for recalling a trained model (i.e. set of <fp> type W, b)
             Network(const std::string fileName) { /*TODO*/ return; }
+
+            // consider input validation (?)
+            void setLearnRate(fp rate) {
+
+                learnRate = rate;
+
+            } 
 
             // returns loss of given sample provided a given label
             fp sampleCost(fp * sample, fp * label) {
@@ -500,7 +511,7 @@ namespace nnet {
                 // apply all newly-updated gradients to their respective layers
                 for (l = 0; l < L; l++) {
                     
-                    layers[l]->applyGradient();
+                    layers[l]->applyGradient(learnRate);
 
                 }
 
@@ -539,11 +550,7 @@ namespace nnet {
                 // apply all newly-updated gradients to their respective layers
                 for (size_t l = 0; l < layers.size(); l++) {
                     
-                    layers[l]->applyGradient();
-
-                    // TODO: add a best-cost-based gradient saving mechanism here
-                    // since the back-propagation training method resets gradients
-                    // after a batch fit anyway
+                    layers[l]->applyGradient(learnRate);
 
                     layers[l]->gradient->reset();
 
@@ -571,15 +578,19 @@ namespace nnet {
 
             }
 
-            void saveLayersAsBest(void) {
+            void saveLayersAsBestFit(void) {
 
                 for (auto layer : layers) layer->saveLayerAsBest();
 
+                return;
+
             }
 
-            void recallBestLayers(void) {
+            void recallBestFitLayers(void) {
 
                 for (auto layer : layers) layer->recallBestLayer();
+
+                return;
 
             }
 
