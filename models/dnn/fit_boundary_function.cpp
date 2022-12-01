@@ -18,12 +18,13 @@
 int main(void) {
 
     // import data and verify equal set length with assert()
-    auto features   = new DataTable<float>(TRAIN_PATH, ',');
-    auto labels     = new DataTable<float>(LABEL_PATH, ',');
+    auto features     = new DataTable<float>(TRAIN_PATH, ',');
+    auto labels       = new DataTable<float>(LABEL_PATH, ',');
 
     float ** trainSet = features->export2DArray();
     float ** labelSet = labels->export2DArray();
 
+    // verify matching set length
     size_t lenTrain = features->rowDim();
     assert(lenTrain == labels->rowDim());
 
@@ -34,9 +35,9 @@ int main(void) {
     // where type 'nnet::layer_t' defines { layerNeuronCount, layerActivFunc }
     auto layers = {
         
-        (nnet::layer_t){ 2, nnet::ActivationTypes::sigmoid },
-        (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid },
-        (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid }     
+        (nnet::layer_t){ 2, nnet::ActivationTypes::relu     },
+        (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid  },
+        (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid  }     
 
     };
 
@@ -48,6 +49,8 @@ int main(void) {
     std::cout << dnn->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
 
     // Train network with batched inputs and back-propagation
+
+    dnn->setLearnRate(0.001);
 
     float cost, bestCost = MAXFLOAT;
 
@@ -65,7 +68,7 @@ int main(void) {
 
             if (cost < bestCost) {
 
-                dnn->saveLayersAsBest();
+                dnn->saveLayersAsBestFit();
 
                 bestCost = cost;
 
@@ -75,7 +78,7 @@ int main(void) {
 
     }
 
-    dnn->recallBestLayers();
+    dnn->recallBestFitLayers();
 
     std::cout << "Post-fit accuracy:\t"; 
     std::cout << dnn->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
