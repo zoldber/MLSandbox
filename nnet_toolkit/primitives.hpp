@@ -1,4 +1,5 @@
 #include "activation_functions.hpp"
+#include <functional>
 #include <iostream>
 #include <assert.h>
 #include <time.h>   // supports srand(time(0)), as called in Layer contructor
