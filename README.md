@@ -9,18 +9,16 @@ Basic neural networks implemented with an emphasis on modularity. This project w
 
 #### 1. Interfacing and Portability
 
-Feeding sample features to a network or configuring parameters should be as discrete as possible, and networks won't expect inputs (features or hyper-parameters) that are wrapped in a particular class or struct [^a]. Further, the network should output a vector of activation values as an array of ordinary type, or, at most, a scalar result derived with minimal complexity (e.g. a max or a min within the prediction vector). _The general aim of these models is explicit interfacing with primitive blocks and data structures, as opposed to abstracting them for breivity_.
+Feeding sample features to a network or configuring parameters should be as discrete as possible, and networks won't expect inputs (features or hyper-parameters) that are wrapped in a particular class or struct \[a]. Further, the network should output a vector of activation values as an array of ordinary type, or, at most, a scalar result derived with minimal complexity (e.g. a max or a min within the prediction vector). _The general aim of these models is explicit interfacing with primitive blocks and data structures, as opposed to abstracting them for breivity_.
 
-[^a]: layer initialization deviates from this goal slightly by using the following:
+\[1.a] layer initialization deviates from this goal slightly by using the following:
 
 '''
-
 // layer_t: custom struct that contains:
 //  - layer size (in nodes), a size_t variable
 //  - layer activation function, an enumerated class correpsonding to a first order activation function
 
-layer_t someGenericLayer = { layerSize, nnet::ActivationTypes::lrelu };
-
+layer_t someGenericLayer = { 8, nnet::ActivationTypes::lrelu }; // layer has 8 neurons and uses leaky ReLU
 '''
 This was a simple, and safe alternative to passing a function pointer directly. It restricts the selection of activation functions to a list defined in nnet_toolkit/activation_functions.hpp and ensures that a layer is initialized with a valid activation function and its correpsonding derivative.
 
