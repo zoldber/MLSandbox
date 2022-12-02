@@ -9,13 +9,24 @@ Basic neural networks implemented with an emphasis on modularity. This project w
 
 #### 1. Interfacing and Portability
 
-Feeding sample features to a network or configuring parameters should be as discrete as possible, and networks won't expect inputs (features or hyper-parameters) that are wrapped in a particular class or struct*. Further, the network should output a vector of activation values as an array of ordinary type, or, at most, a scalar result derived with minimal complexity (e.g. a max or a min within the prediction vector). _The general aim of these models is explicit interfacing with primitive blocks and data structures, as opposed to abstracting them for breivity_.
+Feeding sample features to a network or configuring parameters should be as discrete as possible, and networks won't expect inputs (features or hyper-parameters) that are wrapped in a particular class or struct [^a]. Further, the network should output a vector of activation values as an array of ordinary type, or, at most, a scalar result derived with minimal complexity (e.g. a max or a min within the prediction vector). _The general aim of these models is explicit interfacing with primitive blocks and data structures, as opposed to abstracting them for breivity_.
 
-* layer initialization utilizes "layer_t" : { ..., "nnet::ActivationTypes::<funcName>" }
+[^a]: layer initialization deviates from this goal slightly by using the following:
+
+'''
+
+// layer_t: custom struct that contains:
+//  - layer size (in nodes), a size_t variable
+//  - layer activation function, an enumerated class correpsonding to a first order activation function
+
+layer_t someGenericLayer = { layerSize, nnet::ActivationTypes::lrelu };
+
+'''
+This was a simple, and safe alternative to passing a function pointer directly. It restricts the selection of activation functions to a list defined in nnet_toolkit/activation_functions.hpp and ensures that a layer is initialized with a valid activation function and its correpsonding derivative.
 
 #### 2. Dependencies
 
-To this end, non-STL libraries (with the possible exception of parallelizing libs) are avoided! It's worth noting that many network demos in this repo will include custom headers for importing data. This minimizes distraction from network-specific code blocks in the demo program, and all reads are cast as ordinary arrays before being fed into a network. I've also made the repo of each custom import header public for ease of debugging / convenience / reference etc.
+None, as non-STL libraries (with the _possible_ exception of parallelizing libs) are avoided entirely. It's worth noting that many network demos in this repo will include custom headers for importing data. This minimizes distraction from network-specific code blocks in the demo program, and all reads are cast as ordinary arrays before being fed into a network. I've also made the repo of each custom import header public for ease of debugging / convenience / reference etc.
 
 - - -
 
