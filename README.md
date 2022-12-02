@@ -13,13 +13,16 @@ Feeding sample features to a network or configuring parameters should be as disc
 
 \[1.a] layer initialization deviates from this goal slightly by using the following:
 
-'''
+```cpp
+
 // layer_t: custom struct that contains:
 //  - layer size (in nodes), a size_t variable
 //  - layer activation function, an enumerated class correpsonding to a first order activation function
 
 layer_t someGenericLayer = { 8, nnet::ActivationTypes::lrelu }; // layer has 8 neurons and uses leaky ReLU
-'''
+
+```
+
 This was a simple, and safe alternative to passing a function pointer directly. It restricts the selection of activation functions to a list defined in nnet_toolkit/activation_functions.hpp and ensures that a layer is initialized with a valid activation function and its correpsonding derivative.
 
 #### 2. Dependencies
