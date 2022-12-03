@@ -33,6 +33,10 @@ None, as non-STL libraries (with the _possible_ exception of parallelizing libs)
 
 ### TODO:
 
+- [X] Generic templates and network primitives (layers, gradients, etc.)
+
+- [X] Demo of basic classification by fitting boundary functions
+
 - [ ] Modules optimized for convolutional neural networks (CNN)
 
 - [ ] Demo DNN, CNN implementations of a 28x28 pixel map classifier (benchmark with MNIST and compare accuracy)
