@@ -33,10 +33,10 @@ None, as non-STL libraries (with the _possible_ exception of parallelizing libs)
 
 ### TODO:
 
-- Modules optimized for convolutional neural networks (CNN)
+- [ ] Modules optimized for convolutional neural networks (CNN)
 
-- Demo DNN, CNN implementations of a 28x28 pixel map classifier (benchmark with MNIST and compare accuracy)
+- [ ] Demo DNN, CNN implementations of a 28x28 pixel map classifier (benchmark with MNIST and compare accuracy)
 
-- Modules to support transformers, and a demo of "attention" in the context of natural language processing
+- [ ] Modules to support transformers, and a demo of "attention" in the context of natural language processing
 
-- Parallelization templates (likely using OpenMPI) for high-throughput feature-processing applications
+- [ ] Parallelization templates (likely using OpenMPI) for high-throughput feature-processing applications
