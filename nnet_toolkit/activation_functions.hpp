@@ -1,6 +1,6 @@
 #include <cmath>
-// Note: this namespace isn't a mistake! The compiler blobs all common
-// namespaces together (apparently this is even somewhat common in STL)
+// Note: this namespace is intentional. The compiler blobs all aliased
+// namespaces together
 namespace nnet {
     
     // consider a more elegant way of initializing layer-specific activation functions
@@ -85,11 +85,6 @@ namespace nnet {
 
         public:
 
-            // passing a function pointer on init seems like an easy
-            // alternative but setting the activation fn and its correpsonding
-            // dv once via an enumerated keyword in the constructor is
-            // more performant and less confusing. Consider alternatives (but
-            // not too hard)
             fp (*function)(fp);
             fp (*derivative)(fp);
 

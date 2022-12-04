@@ -1,7 +1,4 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
 
 #include <assert.h>
 
@@ -31,11 +28,17 @@ int main(void) {
     delete features;
     delete labels;
 
+    // Train network with batched inputs and back-propagation
+    float learnRate = 0.00250;
+    size_t batch = 0;
+    size_t numBatches = 3200;
+    size_t randBatch, batchSize = 200;
+
     // build network by layer as a vector of 'nnet::layer_t' elements,
     // where type 'nnet::layer_t' defines { layerNeuronCount, layerActivFunc }
     auto layers = {
         
-        (nnet::layer_t){ 2, nnet::ActivationTypes::relu     },
+        (nnet::layer_t){ 2, nnet::ActivationTypes::sigmoid  },
         (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid  },
         (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid  }     
 
@@ -45,26 +48,30 @@ int main(void) {
     // (as opposed to a larger but more precise fp type)
     auto dnn = new nnet::Network<float>(layers);
 
-    std::cout << "Pre-fit accuracy:\t"; 
-    std::cout << dnn->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
+    // title for csv log
+    std::cout << "batch size: " << batchSize << " learn rate: " << learnRate << std::endl;
 
-    // Train network with batched inputs and back-propagation
+    // headers for csv log
+    std::cout << "Batch, Cost" << std::endl;
 
-    dnn->setLearnRate(0.001);
+    dnn->resetNetwork(time(0));
+
+    dnn->setLearnRate(learnRate);
 
     float cost, bestCost = MAXFLOAT;
 
-    size_t randBatch, batchSize = 200, batchMax = lenTrain - batchSize;
+    while (batch < numBatches) {
 
-    for (int i = 0; i < 32000; i++) {
-
-        randBatch = rand() % batchMax;
+        // choose a contiguous set of samples from the population (by index)
+        randBatch = rand() % (lenTrain - batchSize);
 
         dnn->fitBackProp(&trainSet[randBatch], &labelSet[randBatch], batchSize);
 
-        if (i%100==0) {
-            
+        if (batch%10==0) {
+
             cost = dnn->populationCost(trainSet, labelSet, lenTrain);
+
+            std::cout << batch << ", " << cost << "\n";
 
             if (cost < bestCost) {
 
@@ -73,15 +80,31 @@ int main(void) {
                 bestCost = cost;
 
             }
-
+            
         }
+
+        batch++;
 
     }
 
     dnn->recallBestFitLayers();
 
-    std::cout << "Post-fit accuracy:\t"; 
-    std::cout << dnn->classifierAccuracy(trainSet, labelSet, lenTrain) * 100.0 << "%" << std::endl;
+    float accuracy = dnn->classifierAccuracy(trainSet, labelSet, lenTrain);
+
+    std::cout << "Accuracy: " << accuracy * 100.0 << "% (not cost)" << std::endl;
+
+    // housekeeping
+    for (size_t i = 0; i < lenTrain; i++) {
+
+        delete trainSet[i];
+        delete labelSet[i];
+
+    }
+
+    delete trainSet;
+    delete labelSet;
+
+    delete dnn;
 
     return 0;
 

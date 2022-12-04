@@ -32,19 +32,38 @@ namespace nnet {
             fp ** W;
             fp * b;
 
-            // randomize gradient on init.
             Gradient(size_t inp, size_t out) {
 
                 inpSize = inp;
                 outSize = out;
 
-                backPropVector = new fp[out]();
+                backPropVector = new fp[outSize]();
 
-                W = new fp * [inp]();
+                W = new fp * [inpSize]();
 
-                for (size_t i = 0; i < inp; i++) W[i] = new fp[out]();
+                for (size_t i = 0; i < inpSize; i++) {
+                    
+                    W[i] = new fp[outSize]();
 
-                b = new fp[out]();
+                }
+
+                b = new fp[outSize]();
+
+            }
+
+            ~Gradient(void) {
+
+                for (size_t i = 0; i < inpSize; i++) {
+                    
+                    delete W[i];
+
+                }
+
+                delete W;
+
+                delete b;
+
+                delete backPropVector;
 
             }
 
@@ -88,29 +107,6 @@ namespace nnet {
             fp d_nodeCost(fp output, fp expected) {
 
                 return 2.0 * (output - expected);
-
-            }
-
-            void randomizeWeights(int seed) {
-
-                std::srand(seed);
-
-                size_t inpNode, outNode;
-
-                fp tmp, scale = (fp)std::sqrt(inpSize);
-
-                for (inpNode = 0; inpNode < inpSize; inpNode++) {
-
-                    for (outNode = 0; outNode < outSize; outNode++) {
-
-                        // normalizes to (-1, 1)
-                        tmp = (2.0 * (fp)std::rand() / (fp)RAND_MAX) - 1.0;
-
-                        W[inpNode][outNode] = tmp / scale;
-
-                    }
-
-                }
 
             }
 
@@ -167,31 +163,50 @@ namespace nnet {
                 inpSize = inp;
                 outSize = out;
 
-                W = new fp * [inp]();
+                W = new fp * [inpSize]();
+                bestWeights = new fp * [inpSize]();
 
-                bestWeights = new fp * [inp]();
-
-                for (size_t i = 0; i < inp; i++) {
+                for (size_t i = 0; i < inpSize; i++) {
                     
-                    W[i] = new fp[out]();
+                    W[i] = new fp[outSize]();
 
-                    bestWeights[i] = new fp[out]();
+                    bestWeights[i] = new fp[outSize]();
 
                 }
 
-                b = new fp[out]();
+                b = new fp[outSize]();
+                bestBiases = new fp[outSize]();
 
-                bestBiases = new fp[out]();
+                inputValues = new fp[inpSize]();
+                inpWeighted = new fp[inpSize]();
+                activations = new fp[inpSize]();
 
-                inputValues = new fp[inp]();
-                inpWeighted = new fp[out]();
-                activations = new fp[out]();
-
-                randomizeWeights(time(0));
-
-                gradient = new Gradient<fp>(inp, out);
+                gradient = new Gradient<fp>(inpSize, outSize);
 
                 activation = new Activation<fp>(afn);
+
+            }
+
+            ~Layer(void) {
+
+                for (size_t i = 0; i < inpSize; i++) {
+                    
+                    delete W[i];
+
+                    delete bestWeights[i];
+
+                }
+
+                delete b;
+
+                delete bestBiases;
+
+                delete inputValues;
+                delete inpWeighted;
+                delete activations;
+
+
+                delete gradient;
 
             }
 
@@ -265,25 +280,25 @@ namespace nnet {
             void updateHiddenLayerCostDerivative(Layer<fp> * lastLayer) {
 
                 // new node index, old node index
-                size_t nni, oni;
+                size_t newNodeInp, oldNodeInp;
 
                 fp newNodeValue, d_inpWeighted;
 
-                for (nni = 0; nni < outSize; nni++) {
+                for (newNodeInp = 0; newNodeInp < outSize; newNodeInp++) {
 
                     newNodeValue = 0;
 
-                    for (oni = 0; oni < lastLayer->outSize; oni++) {
+                    for (oldNodeInp = 0; oldNodeInp < lastLayer->outSize; oldNodeInp++) {
 
-                        d_inpWeighted = lastLayer->W[nni][oni];
+                        d_inpWeighted = lastLayer->W[newNodeInp][oldNodeInp];
 
-                        newNodeValue += (d_inpWeighted * lastLayer->gradient->backPropVector[oni]);
+                        newNodeValue += (d_inpWeighted * lastLayer->gradient->backPropVector[oldNodeInp]);
 
                     }
 
-                    newNodeValue *= activation->derivative(inpWeighted[nni]);
+                    newNodeValue *= activation->derivative(inpWeighted[newNodeInp]);
 
-                    gradient->backPropVector[nni] = newNodeValue;
+                    gradient->backPropVector[newNodeInp] = newNodeValue;
 
                 }
 
@@ -331,7 +346,28 @@ namespace nnet {
 
             }
 
+            void randomizeWeights(int seed) {
 
+                std::srand(seed);
+
+                size_t inpNode, outNode;
+
+                fp tmp, scale = (fp)std::sqrt(inpSize);
+
+                for (inpNode = 0; inpNode < inpSize; inpNode++) {
+
+                    for (outNode = 0; outNode < outSize; outNode++) {
+
+                        // normalizes to (-1, 1)
+                        tmp = (2.0 * (fp)std::rand() / (fp)RAND_MAX) - 1.0;
+
+                        W[inpNode][outNode] = tmp / scale;
+
+                    }
+
+                }
+
+            }
             
     };
 
@@ -350,8 +386,6 @@ namespace nnet {
             fp learnRate;
 
         public:
-
-            //Network(const std::vector<size_t> dimensions) {
 
             Network(const std::vector<layer_t> layerCfg) {
 
@@ -373,10 +407,23 @@ namespace nnet {
 
                 outputActivation = layers.back()->activations;
 
+                // finally, initilize layers and correpsonding gradients
+                resetNetwork(time(0));
+
+                return;
+
             }
 
             // use this constructor for recalling a trained model (i.e. set of <fp> type W, b)
             Network(const std::string fileName) { /*TODO*/ return; }
+
+            ~Network(void) {
+
+                for (auto layer : layers) delete layer;
+
+                return;
+
+            }
 
             // consider input validation (?)
             void setLearnRate(fp rate) {
@@ -548,11 +595,10 @@ namespace nnet {
                 }
 
                 // apply all newly-updated gradients to their respective layers
-                for (size_t l = 0; l < layers.size(); l++) {
-                    
-                    layers[l]->applyGradient(learnRate);
+                for (auto layer : layers) {
 
-                    layers[l]->gradient->reset();
+                    layer->applyGradient(learnRate);
+                    layer->gradient->reset();
 
                 }
 
@@ -591,6 +637,17 @@ namespace nnet {
                 for (auto layer : layers) layer->recallBestLayer();
 
                 return;
+
+            }
+
+            void resetNetwork(int seed) {
+
+                for (auto layer : layers) {
+
+                    layer->randomizeWeights(seed);
+                    layer->gradient->reset();
+
+                }
 
             }
 
