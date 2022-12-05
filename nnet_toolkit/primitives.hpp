@@ -210,6 +210,9 @@ namespace nnet {
 
             }
 
+            // input[], inpWeighted[], and activations[] are allocated outside
+            // of this function within the constructor, and the pointer return
+            // of fp * evaluate(vals) is 1/2 notational and 1/2 debug-friendly
             fp * evaluate(fp * input) {
 
                 size_t inpNode, outNode;
@@ -229,9 +232,11 @@ namespace nnet {
 
                     inpWeighted[outNode] = n + b[outNode];
 
-                    activations[outNode] = activation->function(inpWeighted[outNode]);
+                    // WORKING: activations[outNode] = activation->function(inpWeighted[outNode]);
 
                 }
+
+                activation->applyFunc(inpWeighted, activations, outSize);
 
                 return activations;
 
@@ -259,17 +264,34 @@ namespace nnet {
 
             void updateOutputCostDerivative(fp * label) {
 
-                size_t node;
-
+                // computes first "backPropVector" from the output layer as the product of
                 // partial derivatives of output layer's cost/actv and actv/inpWeighted
-                fp d_cost, d_activation;
 
-                for (node = 0; node < outSize; node++) {
+                // given:
+                //      label[] : expected output vals
+                //      out[]   : output values, out[] afn()
+                //      afn([]) : activation function
+                //      afn'([]): derivative of afn([])
+                //      cost(,) : cost function of an output val wrt expected val
+                //      cost'(,): derivative of cost() for the inputs described above
+                //      W[][]   : layer weights
+                //      W_i[]   : weighted input vector = matmul(W[][], i[])
+                //      a[]     : activation vector = afn(W_i[])
+                //      G.v[]   : gradient back-prop. vector           
+                //      d_c[]   : derivNodeCost(output[], expected[])
+                //      - - - - - - - - - - - - - - - -
+                //      Result (original):
+                //          for i { G.v[i] = cost'(out[i], label[i]) * afn'(W_i[i]) }
+                //
+                //      Update (after implementing afns as lambdas):
+                //          activation->applyDeriv(W_i, G.v, numNodes)
+                //          for i { G.v[i] *= cost'(out[i], label[i]) }
 
-                    d_cost = d_nodeCost(activations[node], label[node]);
-                    d_activation = activation->derivative(inpWeighted[node]);
+                activation->applyDeriv(inpWeighted, gradient->backPropVector, outSize);
 
-                    gradient->backPropVector[node] = d_cost * d_activation;
+                for (size_t i = 0; i < outSize; i++) {
+
+                    gradient->backPropVector[i] *= d_nodeCost(activations[i], label[i]);
 
                 }
 
@@ -277,28 +299,46 @@ namespace nnet {
 
             }
 
+            // a generalized iteration of the operation above, performs the following steps:
+
+            // given:
+            //      lastLyr : ptr to "previous" layer duing back-prop (the subsequent layer ordinarily)
+            //      oldInp[]: 
+            //      newInp[]:
+            //      - - - - - - - - - - - - - - - -
+            //      Result (original):
+            //          for i = [0:this->outSize] { 
+            //
+            //          }
+            //
+            //      Update (after implementing afns as lambdas):
+            //          activation->applyDeriv(W_i, G.v, numNodes)
+            //          for i { G.v[i] *= cost'(out[i], label[i]) }
+
             void updateHiddenLayerCostDerivative(Layer<fp> * lastLayer) {
 
-                // new node index, old node index
-                size_t newNodeInp, oldNodeInp;
+                // indices for this layer's node and last, respectively,
+                // for use in computing the back prop vector's aggregate
+                size_t thisNodeInp, lastInpNode;
 
-                fp newNodeValue, d_inpWeighted;
+                fp gradientAgg;     // gradient aggregate
+                fp d_inpWeighted;   // tmp for deriv of W_i computed in last layer
 
-                for (newNodeInp = 0; newNodeInp < outSize; newNodeInp++) {
+                activation->applyDeriv(inpWeighted, gradient->backPropVector, outSize);
 
-                    newNodeValue = 0;
+                for (thisNodeInp = 0; thisNodeInp < outSize; thisNodeInp++) {
 
-                    for (oldNodeInp = 0; oldNodeInp < lastLayer->outSize; oldNodeInp++) {
+                    gradientAgg = 0;
 
-                        d_inpWeighted = lastLayer->W[newNodeInp][oldNodeInp];
+                    for (lastInpNode = 0; lastInpNode < lastLayer->outSize; lastInpNode++) {
 
-                        newNodeValue += (d_inpWeighted * lastLayer->gradient->backPropVector[oldNodeInp]);
+                        d_inpWeighted = lastLayer->W[thisNodeInp][lastInpNode];
+
+                        gradientAgg += (d_inpWeighted * lastLayer->gradient->backPropVector[lastInpNode]);
 
                     }
 
-                    newNodeValue *= activation->derivative(inpWeighted[newNodeInp]);
-
-                    gradient->backPropVector[newNodeInp] = newNodeValue;
+                    gradient->backPropVector[thisNodeInp] *= gradientAgg;
 
                 }
 

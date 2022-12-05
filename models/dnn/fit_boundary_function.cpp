@@ -49,16 +49,20 @@ int main(void) {
     auto dnn = new nnet::Network<float>(layers);
 
     // title for csv log
-    std::cout << "batch size: " << batchSize << " learn rate: " << learnRate << std::endl;
+    // std::cout << "batch size: " << batchSize << " learn rate: " << learnRate << std::endl;
 
     // headers for csv log
-    std::cout << "Batch, Cost" << std::endl;
+    // std::cout << "Batch, Cost" << std::endl;
 
     dnn->resetNetwork(time(0));
 
     dnn->setLearnRate(learnRate);
 
-    float cost, bestCost = MAXFLOAT;
+    float accuracy, cost, bestCost = MAXFLOAT;
+
+    accuracy = dnn->classifierAccuracy(trainSet, labelSet, lenTrain);
+
+    std::cout << "Init accuracy:\t" << accuracy * 100.0 << "% (not cost)" << std::endl;
 
     while (batch < numBatches) {
 
@@ -71,7 +75,7 @@ int main(void) {
 
             cost = dnn->populationCost(trainSet, labelSet, lenTrain);
 
-            std::cout << batch << ", " << cost << "\n";
+            // std::cout << batch << ", " << cost << "\n";
 
             if (cost < bestCost) {
 
@@ -89,9 +93,9 @@ int main(void) {
 
     dnn->recallBestFitLayers();
 
-    float accuracy = dnn->classifierAccuracy(trainSet, labelSet, lenTrain);
+    accuracy = dnn->classifierAccuracy(trainSet, labelSet, lenTrain);
 
-    std::cout << "Accuracy: " << accuracy * 100.0 << "% (not cost)" << std::endl;
+    std::cout << "Final accuracy:\t" << accuracy * 100.0 << "% (not cost)" << std::endl;
 
     // housekeeping
     for (size_t i = 0; i < lenTrain; i++) {
