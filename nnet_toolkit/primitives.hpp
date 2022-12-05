@@ -299,29 +299,37 @@ namespace nnet {
 
             }
 
-            // a generalized iteration of the operation above, performs the following steps:
-
-            // given:
-            //      lastLyr : ptr to "previous" layer duing back-prop (the subsequent layer ordinarily)
-            //      oldInp[]: 
-            //      newInp[]:
-            //      - - - - - - - - - - - - - - - -
-            //      Result (original):
-            //          for i = [0:this->outSize] { 
-            //
-            //          }
-            //
-            //      Update (after implementing afns as lambdas):
-            //          activation->applyDeriv(W_i, G.v, numNodes)
-            //          for i { G.v[i] *= cost'(out[i], label[i]) }
-
             void updateHiddenLayerCostDerivative(Layer<fp> * lastLayer) {
+
+                // a generalization of the operation above, performs the following steps:
+
+                // given:
+                //      thisLyr : layer in which this method is called
+                //      lastLyr : ptr to "previous" (normally subsequent) layer in back-prop
+                //      W[][]   : weights (same type for both layers but dims might vary) 
+                //      G.v[]   : back-prop vector (see previous function desc.)
+                //      tmpAgg  : gradient aggregate variable (scalar)
+                //      - - - - - - - - - - - - - - - -
+                //      Update:
+                //          activation->applyDeriv(W_i, G.v, numNodes)
+                //
+                //          get x,y as lastLyr->W[x][y]
+                //
+                //          for x {
+                //
+                //              reset tmpAgg to 0
+                //
+                //              for y { tmpAgg += ( lastLyr->W[x][y] * lastLyr.G.v[y] }
+                //              
+                //              thisLyr->G.v[x] *= tmpAgg
+                // 
+                //          }
 
                 // indices for this layer's node and last, respectively,
                 // for use in computing the back prop vector's aggregate
                 size_t thisNodeInp, lastInpNode;
 
-                fp gradientAgg;     // gradient aggregate
+                fp gradientAgg;     // tmp for summation of the partial derivs computed over last layer
                 fp d_inpWeighted;   // tmp for deriv of W_i computed in last layer
 
                 activation->applyDeriv(inpWeighted, gradient->backPropVector, outSize);
@@ -686,7 +694,10 @@ namespace nnet {
 
                     layer->randomizeWeights(seed);
                     layer->gradient->reset();
-
+                    // fixes bug wherein recallBestFitLayers() can be called on a
+                    // network without saved layers (each 'best' layer is zero'd)
+                    // to erase all randomized weights on start
+                    layer->saveLayerAsBest();
                 }
 
             }

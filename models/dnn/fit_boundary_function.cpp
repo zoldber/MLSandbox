@@ -33,6 +33,7 @@ int main(void) {
     size_t batch = 0;
     size_t numBatches = 3200;
     size_t randBatch, batchSize = 200;
+    size_t saveBestFreq = 10;
 
     // build network by layer as a vector of 'nnet::layer_t' elements,
     // where type 'nnet::layer_t' defines { layerNeuronCount, layerActivFunc }
@@ -48,21 +49,13 @@ int main(void) {
     // (as opposed to a larger but more precise fp type)
     auto dnn = new nnet::Network<float>(layers);
 
-    // title for csv log
-    // std::cout << "batch size: " << batchSize << " learn rate: " << learnRate << std::endl;
-
-    // headers for csv log
-    // std::cout << "Batch, Cost" << std::endl;
-
-    dnn->resetNetwork(time(0));
-
     dnn->setLearnRate(learnRate);
 
     float accuracy, cost, bestCost = MAXFLOAT;
 
     accuracy = dnn->classifierAccuracy(trainSet, labelSet, lenTrain);
 
-    std::cout << "Init accuracy:\t" << accuracy * 100.0 << "% (not cost)" << std::endl;
+    std::cout << "Init. accuracy:\t" << accuracy * 100.0 << "%" << std::endl;
 
     while (batch < numBatches) {
 
@@ -71,11 +64,9 @@ int main(void) {
 
         dnn->fitBackProp(&trainSet[randBatch], &labelSet[randBatch], batchSize);
 
-        if (batch%10==0) {
+        if (batch%saveBestFreq==0) {
 
             cost = dnn->populationCost(trainSet, labelSet, lenTrain);
-
-            // std::cout << batch << ", " << cost << "\n";
 
             if (cost < bestCost) {
 
@@ -95,9 +86,10 @@ int main(void) {
 
     accuracy = dnn->classifierAccuracy(trainSet, labelSet, lenTrain);
 
-    std::cout << "Final accuracy:\t" << accuracy * 100.0 << "% (not cost)" << std::endl;
+    std::cout << "Final accuracy: " << accuracy * 100.0 << "%" << std::endl;
 
     // housekeeping
+    
     for (size_t i = 0; i < lenTrain; i++) {
 
         delete trainSet[i];
