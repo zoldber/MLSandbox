@@ -26,7 +26,7 @@ namespace nnet {
 
     // has the effect of passing weighted inputs directly
     template<typename fp>
-    void none(fp * x, fp * y, size_t len) {
+    void _none(fp * x, fp * y, size_t len) {
 
         std::memcpy(y, x, len * sizeof(fp));
 
@@ -36,7 +36,7 @@ namespace nnet {
 
     // deriv value of 1.0 assumes no scaling in afns
     template<typename fp>
-    void d_none(fp * x, fp * y, size_t len) {
+    void _d_none(fp * x, fp * y, size_t len) {
 
         std::memset(y, 1.0, len * sizeof(fp));
 
@@ -45,7 +45,7 @@ namespace nnet {
     }
 
     template<typename fp>
-    void relu(fp * x, fp * y, size_t len) {
+    void _relu(fp * x, fp * y, size_t len) {
 
         for (size_t i = 0; i < len; i++) {
 
@@ -58,7 +58,7 @@ namespace nnet {
     }
 
     template<typename fp>
-    void d_relu(fp * x, fp * y, size_t len) {
+    void _d_relu(fp * x, fp * y, size_t len) {
 
         for (size_t i = 0; i < len; i++) {
 
@@ -71,7 +71,7 @@ namespace nnet {
     }
 
     template<typename fp>
-    void lrelu(fp * x, fp * y, size_t len) {
+    void _lrelu(fp * x, fp * y, size_t len) {
 
         for (size_t i = 0; i < len; i++) {
 
@@ -84,7 +84,7 @@ namespace nnet {
     }
 
     template<typename fp>
-    void d_lrelu(fp * x, fp * y, size_t len) {
+    void _d_lrelu(fp * x, fp * y, size_t len) {
 
         for (size_t i = 0; i < len; i++) {
 
@@ -97,7 +97,7 @@ namespace nnet {
     }
 
     template<typename fp>
-    void sigmoid(fp * x, fp * y, size_t len) { 
+    void _sigmoid(fp * x, fp * y, size_t len) { 
     
         for (size_t i = 0; i < len; i++) {
 
@@ -110,11 +110,11 @@ namespace nnet {
     }
 
     template<typename fp>
-    void d_sigmoid(fp * x, fp * y, size_t len) {
+    void _d_sigmoid(fp * x, fp * y, size_t len) {
 
         // d_sig(x) = sig(x)(1 - sig(x))
 
-        sigmoid(x, y, len);
+        _sigmoid(x, y, len);
 
         for (size_t i = 0; i < len; i++) {
 
@@ -126,7 +126,7 @@ namespace nnet {
     }
     
     template<typename fp>
-    void fastSigmoid(fp * x, fp * y, size_t len) {
+    void _fastSigmoid(fp * x, fp * y, size_t len) {
 
         for (size_t i = 0; i < len; i++) {
 
@@ -139,7 +139,7 @@ namespace nnet {
     }
 
     template<typename fp>
-    void d_fastSigmoid(fp * x, fp * y, size_t len) { 
+    void _d_fastSigmoid(fp * x, fp * y, size_t len) { 
         
         fp tmp;
 
@@ -156,46 +156,51 @@ namespace nnet {
     }
 
 
-    // assign each layer's activation function and corresponding dv afn
+    // Assign each layer's activation function and corresponding dv afn
     // once within constructor. Iterating through a list of returns based on the
     // enumerations becomes slow for large networks
     template<class fp>
     class Activation {
         private:
 
+            // Should be protected by private scope and returned by method call
+            ActivationTypes functionType;
+
         public:
 
-            // for reference: syntax is type_t (*fptr)(type_t x, ..., type_t y)
+            // For reference: syntax is type_t (*fptr)(type_t x, ..., type_t y)
             void (*applyFunc)(fp * x, fp * y, size_t len);
             void (*applyDeriv)(fp * x, fp * y, size_t len);
 
             Activation(ActivationTypes type) {
 
-                switch(type) {
+                this->functionType = type;
+
+                switch(functionType) {
 
                     case ActivationTypes::relu:
-                        applyFunc   = &relu;
-                        applyDeriv  = &d_relu;
+                        applyFunc   = &_relu;
+                        applyDeriv  = &_d_relu;
                         break;
 
                     case ActivationTypes::lrelu:
-                        applyFunc   = &lrelu;
-                        applyDeriv  = &d_lrelu;
+                        applyFunc   = &_lrelu;
+                        applyDeriv  = &_d_lrelu;
                         break;
 
-                    case ActivationTypes::linear:
-                        applyFunc   = &linear;
-                        applyDeriv  = &d_linear;
+                    case ActivationTypes::none:
+                        applyFunc   = &_none;
+                        applyDeriv  = &_d_none;
                         break;
                     
                     case ActivationTypes::sigmoid:
-                        applyFunc   = &sigmoid;
-                        applyDeriv  = &d_sigmoid;
+                        applyFunc   = &_sigmoid;
+                        applyDeriv  = &_d_sigmoid;
                         break;
 
                     case ActivationTypes::fastSigmoid:
-                        applyFunc   = &fastSigmoid;
-                        applyDeriv  = &d_fastSigmoid;
+                        applyFunc   = &_fastSigmoid;
+                        applyDeriv  = &_d_fastSigmoid;
                         break;
 
                     default:
@@ -205,6 +210,14 @@ namespace nnet {
 
                 }
 
+            }
+
+            int type(void) { 
+                
+                int functionType = (int)this->functionType; 
+
+                return functionType;
+                
             }
 
     };

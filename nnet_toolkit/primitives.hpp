@@ -447,7 +447,7 @@ namespace nnet {
                     inp = layerCfg.at(i).n;
                     out = layerCfg.at(i+1).n;
 
-                    layers.push_back( new Layer<fp>(inp, out, layerCfg.at(i).afn) );
+                    layers.push_back( new Layer<fp>(inp, out, layerCfg.at(i+1).afn) );
 
                 }
 
@@ -703,19 +703,22 @@ namespace nnet {
             void printFeatures(void) {
 
                 /*  Supported activation functions:
-
-                    sigmoid,
-                    fastSigmoid,
+                    none,
                     relu,
-                    lrelu
+                    lrelu,
+                    sigmoid,
+                    fastSigmoid
                 */
 
-                const std::string activationFuncs[4] = {"Sigmoid", "Fast Sigmoid", "ReLU", "Leaky ReLU"};
+                const std::string activationFuncs[5] = {"None", "ReLU", "Leaky ReLU", "Sigmoid", "Fast Sigmoid"};
+
+               std::cout << "Input\t{   W[  N/A  ], b[  N/A  ]\t} <- " << activationFuncs[0] << "\n"; // first layer (input) has no activation function
 
                 for (size_t i = 0; i < this->layers.size(); i++) {
                     std::cout << (i < this->layers.size() - 1 ? "Hidden" : "Output");
                     std::cout << "\t{   W[ " << this->layers.at(i)->inpSize << " x " << this->layers.at(i)->outSize;
-                    std::cout << " ], b[ "<< this->layers.at(i)->outSize << " x 1 ]\t} <- " << activationFuncs[i] << std::endl;
+                    std::cout << " ], b[ "<< this->layers.at(i)->outSize << " x 1 ]\t} <- ";
+                    std::cout << activationFuncs[this->layers.at(i)->activation->type()] << std::endl;
                 }
 
                 return;
