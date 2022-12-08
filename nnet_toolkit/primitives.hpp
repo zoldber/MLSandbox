@@ -1,9 +1,9 @@
 #include "activation_functions.hpp"
-#include <functional>
 #include <iostream>
 #include <assert.h>
+#include <cstring>  // supports std::memcpy()
+#include <vector>   // supports layer init, might implement caching in future
 #include <time.h>   // supports srand(time(0)), as called in Layer contructor
-#include <tuple>
 
 #define DEFAULT_LEARN_RATE 0.001
 #define H 0.001 // NOTE: this hyperparameter is used *only* in the naive fit method
@@ -589,6 +589,28 @@ namespace nnet {
             void recallBestFitLayers(void) {
 
                 for (auto layer : layers) layer->recallBestLayer();
+
+                return;
+
+            }
+
+            void printFeatures(void) {
+
+                /*  Supported activation functions:
+
+                    sigmoid,
+                    fastSigmoid,
+                    relu,
+                    lrelu
+                */
+
+                const std::string activationFuncs[4] = {"Sigmoid", "Fast Sigmoid", "ReLU", "Leaky ReLU"};
+
+                for (size_t i = 0; i < this->layers.size(); i++) {
+                    std::cout << (i < this->layers.size() - 1 ? "Hidden" : "Output");
+                    std::cout << "\t{   W[ " << this->layers.at(i)->inpSize << " x " << this->layers.at(i)->outSize;
+                    std::cout << " ], b[ "<< this->layers.at(i)->outSize << " x 1 ]\t} <- " << activationFuncs[i] << std::endl;
+                }
 
                 return;
 
