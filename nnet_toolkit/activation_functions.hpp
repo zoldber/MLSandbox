@@ -1,25 +1,32 @@
-#include <cmath>
-// Note: this namespace is intentional. The compiler blobs all aliased
-// namespaces together
+#include <cmath>    // supports exp()
+#include <cstring>  // supports memcpy
+// Note: this namespace is intentional. 
+// The compiler blobs all aliased namespaces together
 namespace nnet {
     
-    // Effectively lambda functions f(x, y, l) | x.size()==y.size()==l & fn(x)->y
-    // to support aggregate (softmax) as well as element-wise (sigmoid) activations.
+    // Replaced element-wise functions f(x) = y for x[0]->x[n] with array modifiers: 
+    // f(x, y, n) | x.size()==y.size()==n & fn(x)->y
+    // This was done with the intention of supporting aggregating functions like
+    // softmax in future updates. None of these should be modifying in-place.
 
-    // Note: Should NEVER be in-place (e.g. f(x, l)) with current network training fmt
     enum class ActivationTypes { 
         
+        // First enumeration (0) should correspond to "no activation function"
+        // and pass inputs unchanged: y = f(x) = x and y' = f'(x) = 1.0 for all x.
+        // This enables better notation for initializing a network's input layer
+        // (whose declared activation function is discarded anyway), and might see
+        // use in network debug scripts with direct applicaiton of weights and biases
+        none,
         relu,
         lrelu,
-        linear,
         sigmoid,
         fastSigmoid
-        
+
     };
 
     // has the effect of passing weighted inputs directly
     template<typename fp>
-    void linear(fp * x, fp * y, size_t len) {
+    void none(fp * x, fp * y, size_t len) {
 
         std::memcpy(y, x, len * sizeof(fp));
 
@@ -29,7 +36,7 @@ namespace nnet {
 
     // deriv value of 1.0 assumes no scaling in afns
     template<typename fp>
-    void d_linear(fp * x, fp * y, size_t len) {
+    void d_none(fp * x, fp * y, size_t len) {
 
         std::memset(y, 1.0, len * sizeof(fp));
 
@@ -40,7 +47,7 @@ namespace nnet {
     template<typename fp>
     void relu(fp * x, fp * y, size_t len) {
 
-        for (auto i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
 
             y[i] = std::max((fp)0.0, x[i]);
 
@@ -53,7 +60,7 @@ namespace nnet {
     template<typename fp>
     void d_relu(fp * x, fp * y, size_t len) {
 
-        for (auto i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
 
             y[i] = (x[i] > 0.0) ? 1.0 : 0.0;
 
@@ -66,7 +73,7 @@ namespace nnet {
     template<typename fp>
     void lrelu(fp * x, fp * y, size_t len) {
 
-        for (auto i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
 
             y[i] = (x[i] < 0.0) ? 0.01 * x[i] : x[i];
 
@@ -79,7 +86,7 @@ namespace nnet {
     template<typename fp>
     void d_lrelu(fp * x, fp * y, size_t len) {
 
-        for (auto i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
 
             y[i] = (x[i] < 0.0) ? 0.01 : 1.0;
 
@@ -92,7 +99,7 @@ namespace nnet {
     template<typename fp>
     void sigmoid(fp * x, fp * y, size_t len) { 
     
-        for (auto i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
 
             y[i] = 1.0 / (1.0 + std::exp(-x[i])); 
 
@@ -109,7 +116,7 @@ namespace nnet {
 
         sigmoid(x, y, len);
 
-        for (auto i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
 
             y[i] *= (1.0 - y[i]);
 
@@ -121,7 +128,7 @@ namespace nnet {
     template<typename fp>
     void fastSigmoid(fp * x, fp * y, size_t len) {
 
-        for (auto i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
 
             y[i] = x[i] / (1.0 + std::abs(x[i]));
 
@@ -136,7 +143,7 @@ namespace nnet {
         
         fp tmp;
 
-        for (auto i = 0; i < len; i++) {
+        for (size_t i = 0; i < len; i++) {
 
             tmp = 1.0 + std::abs(x[i]);
 

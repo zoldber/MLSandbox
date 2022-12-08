@@ -589,13 +589,13 @@ namespace nnet {
                     // same as above but exclusively for the layer's bias vector
                     for (bias = 0; bias < sizeOut; bias++) {
 
-                        layers[l]->b[bias] += H;
+                        layers[l]->b[bias] += learnRate;
 
                         costDiff = populationCost(samples, labels, sampleCount) - preUpdateCost;
 
-                        layers[l]->b[bias] -= H;
+                        layers[l]->b[bias] -= learnRate;
 
-                        layers[l]->gradient->b[bias] = costDiff / H;
+                        layers[l]->gradient->b[bias] = costDiff / learnRate;
 
                     }
 
@@ -721,7 +721,6 @@ namespace nnet {
                 return;
 
             }
-
 
     };
 
