@@ -3,10 +3,8 @@
 #include <assert.h>
 #include <cstring>  // supports std::memcpy()
 #include <vector>   // supports layer init, might implement caching in future
-#include <time.h>   // supports srand(time(0)), as called in Layer contructor
 
 #define DEFAULT_LEARN_RATE 0.001
-#define H 0.001 // NOTE: this hyperparameter is used *only* in the naive fit method
 
 namespace nnet {    
 
@@ -576,13 +574,13 @@ namespace nnet {
 
                         for (outNode = 0; outNode < sizeOut; outNode++) {
 
-                            layers[l]->W[inpNode][outNode] += H;
+                            layers[l]->W[inpNode][outNode] += this->learnRate;
 
                             costDiff = populationCost(samples, labels, sampleCount) - preUpdateCost;
 
-                            layers[l]->W[inpNode][outNode] -= H;
+                            layers[l]->W[inpNode][outNode] -= this->learnRate;
                             
-                            layers[l]->gradient->W[inpNode][outNode] = costDiff / H;
+                            layers[l]->gradient->W[inpNode][outNode] = costDiff / this->learnRate;
 
                         }
 
