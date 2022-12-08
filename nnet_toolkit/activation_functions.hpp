@@ -1,77 +1,150 @@
 #include <cmath>
-// Note: this namespace isn't a mistake! The compiler blobs all common
-// namespaces together (apparently this is even somewhat common in STL)
+// Note: this namespace is intentional. The compiler blobs all aliased
+// namespaces together
 namespace nnet {
     
-    // consider a more elegant way of initializing layer-specific activation functions
-    // note that a corresponding dv must be simultaneously set if back-prop is
-    // to be used during training
+    // Effectively lambda functions f(x, y, l) | x.size()==y.size()==l & fn(x)->y
+    // to support aggregate (softmax) as well as element-wise (sigmoid) activations.
+
+    // Note: Should NEVER be in-place (e.g. f(x, l)) with current network training fmt
     enum class ActivationTypes { 
         
-        sigmoid,
-        fastSigmoid,
         relu,
-        lrelu
+        lrelu,
+        linear,
+        sigmoid,
+        fastSigmoid
         
     };
 
+    // has the effect of passing weighted inputs directly
     template<typename fp>
-    fp relu(fp x) {
+    void linear(fp * x, fp * y, size_t len) {
 
-        return std::max((fp)0.0, x);
+        std::memcpy(y, x, len * sizeof(fp));
+
+        return;
+
+    }
+
+    // deriv value of 1.0 assumes no scaling in afns
+    template<typename fp>
+    void d_linear(fp * x, fp * y, size_t len) {
+
+        std::memset(y, 1.0, len * sizeof(fp));
+
+        return;
 
     }
 
     template<typename fp>
-    fp d_relu(fp x) {
+    void relu(fp * x, fp * y, size_t len) {
 
-    return (x > 0.0) ? 1.0 : 0.0;
+        for (auto i = 0; i < len; i++) {
 
-    }
+            y[i] = std::max((fp)0.0, x[i]);
 
-    template<typename fp>
-    fp lrelu(fp x) {
+        }
 
-        return (x < 0) ? 0.01 * x : x;
-
-    }
-
-    template<typename fp>
-    fp d_lrelu(fp x) {
-
-        return (x < 0) ? 0.01 : 1.0;
+        return; 
 
     }
 
     template<typename fp>
-    fp sigmoid(fp x) { 
+    void d_relu(fp * x, fp * y, size_t len) {
+
+        for (auto i = 0; i < len; i++) {
+
+            y[i] = (x[i] > 0.0) ? 1.0 : 0.0;
+
+        }
+
+        return;
+
+    }
+
+    template<typename fp>
+    void lrelu(fp * x, fp * y, size_t len) {
+
+        for (auto i = 0; i < len; i++) {
+
+            y[i] = (x[i] < 0.0) ? 0.01 * x[i] : x[i];
+
+        }
+
+        return;
+
+    }
+
+    template<typename fp>
+    void d_lrelu(fp * x, fp * y, size_t len) {
+
+        for (auto i = 0; i < len; i++) {
+
+            y[i] = (x[i] < 0.0) ? 0.01 : 1.0;
+
+        }
+
+        return;
+
+    }
+
+    template<typename fp>
+    void sigmoid(fp * x, fp * y, size_t len) { 
     
-        return 1.0 / (1.0 + std::exp(-x)); 
+        for (auto i = 0; i < len; i++) {
+
+            y[i] = 1.0 / (1.0 + std::exp(-x[i])); 
+
+        }
+
+        return;
         
     }
 
     template<typename fp>
-    fp d_sigmoid(fp x) {
+    void d_sigmoid(fp * x, fp * y, size_t len) {
 
-        fp s = sigmoid(x);
+        // d_sig(x) = sig(x)(1 - sig(x))
 
-        return s * (1.0 - s);
+        sigmoid(x, y, len);
 
+        for (auto i = 0; i < len; i++) {
+
+            y[i] *= (1.0 - y[i]);
+
+        }
+
+        return;
     }
     
     template<typename fp>
-    fp fastSigmoid(fp x) {
+    void fastSigmoid(fp * x, fp * y, size_t len) {
 
-        return x / (1.0 + std::abs(x));
+        for (auto i = 0; i < len; i++) {
+
+            y[i] = x[i] / (1.0 + std::abs(x[i]));
+
+        }
+
+        return;
 
     }
 
     template<typename fp>
-    fp d_fastSigmoid(fp x) { 
+    void d_fastSigmoid(fp * x, fp * y, size_t len) { 
         
-        fp val = (1.0 + std::abs(x));
+        fp tmp;
 
-        return 1.0 / (val * val);
+        for (auto i = 0; i < len; i++) {
+
+            tmp = 1.0 + std::abs(x[i]);
+
+            y[i] = 1.0 / (tmp * tmp);
+
+        }
+
+        return;
         
     }
 
@@ -85,42 +158,42 @@ namespace nnet {
 
         public:
 
-            // passing a function pointer on init seems like an easy
-            // alternative but setting the activation fn and its correpsonding
-            // dv once via an enumerated keyword in the constructor is
-            // more performant and less confusing. Consider alternatives (but
-            // not too hard)
-            fp (*function)(fp);
-            fp (*derivative)(fp);
+            // for reference: syntax is type_t (*fptr)(type_t x, ..., type_t y)
+            void (*applyFunc)(fp * x, fp * y, size_t len);
+            void (*applyDeriv)(fp * x, fp * y, size_t len);
 
             Activation(ActivationTypes type) {
 
-
                 switch(type) {
 
-                    case ActivationTypes::sigmoid:
-                        function    = &sigmoid;
-                        derivative  = &d_sigmoid;
-                        break;
-
-                    case ActivationTypes::fastSigmoid:
-                        function    = &fastSigmoid;
-                        derivative  = &d_fastSigmoid;
-                        break;
-
                     case ActivationTypes::relu:
-                        function    = &relu;
-                        derivative  = &d_relu;
+                        applyFunc   = &relu;
+                        applyDeriv  = &d_relu;
                         break;
 
                     case ActivationTypes::lrelu:
-                        function    = &lrelu;
-                        derivative  = &d_lrelu;
+                        applyFunc   = &lrelu;
+                        applyDeriv  = &d_lrelu;
+                        break;
+
+                    case ActivationTypes::linear:
+                        applyFunc   = &linear;
+                        applyDeriv  = &d_linear;
                         break;
                     
+                    case ActivationTypes::sigmoid:
+                        applyFunc   = &sigmoid;
+                        applyDeriv  = &d_sigmoid;
+                        break;
+
+                    case ActivationTypes::fastSigmoid:
+                        applyFunc   = &fastSigmoid;
+                        applyDeriv  = &d_fastSigmoid;
+                        break;
+
                     default:
-                        function    = &sigmoid;
-                        derivative  = &d_sigmoid;
+                        std::cout << "--\tpassed undefined activation function" << std::endl;
+                        std::abort();
                         break;
 
                 }
