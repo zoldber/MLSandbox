@@ -10,9 +10,9 @@
 The **Network** class and its members implement a universal generic denoted **fp** (for "floating point") through the use of heirarchical templates. Precision and performance of a model are largely defined by the representation of the floating point values therein, and specific applications will often warrant the use of a long double over a float, etc.
 
 - - -
-# Networks:
+# Topologies:
 
-## I. Classic Neural Network
+## I. Standard Network
 
 #### Constructors:
 
@@ -31,6 +31,8 @@ nnet::Network(const std::vector<layer_t> layerCfg);
 // and biases for a static model, or a full network for further training.
 nnet::Network(const std::string filePath);
 ```
+
+<br>
 
 #### Examples:
 
@@ -57,10 +59,17 @@ auto classifier = new nnet::Network<double>(IRIS_CLASSIFIER_PATH);
 auto label = classifier->predict(sample);
 ```
 
+<br>
+
 #### Notes on Structure:
 
+<br>
 
-## II. Layer
+- - -
+
+# Modules
+
+## I. Standard Layer
 
 #### Constructors:
 
@@ -68,22 +77,57 @@ auto label = classifier->predict(sample);
 nnet::Layer(const size_t inp, const size_t out, const ActivationTypes afn);
 ```
 
+<br>
+
 #### Examples:
+
+| Symbol   | Dim.  | Description            | Stored in Sparse Network |
+|----------|-------|------------------------|--------------------------|
+| **W**    |[m x n]| Weights                | Yes
+| **b**    |[m x 1]| Biases                 | Yes
+| **x**    |[n x 1]| Input Vector           | No
+| **z**    |[m x 1]| Weighted Inp. Vector   | TBD
+| **a**    |[m x 1]| Activations (Output)   | Yes
+| **e**    |[m x 1]| Label / Expected Output| No
+| **W~G~** |[m x n]| Gradient Weights       | No
+| **b~G~** |[m x 1]| Gradient Biases        | No
+| **D~BP~**|[m x 1]| Back-Prop. Buffer      | No
+
+Given a "full" layer with dimensions *n* and *m* (input and output size, respectively), 
+the following methods describe the relationship of the member data above:
+
+<br>
+
 ```cpp
+fp * evaluate(const fp * input);
+```
+1.  ![weighted_inputs](resources/weighted_inputs.png) 
+2.  ![activation_step](resources/activation_step.png)
+- returns pointer to newly updated array **a** for layer chaining in feed(sample) etc.
+
+<br>
+
+```cpp
+void applyGradient(const fp learnRate);
+```
+1.  ![scale_gradient_W](resources/scale_gradient_W.png)
+2.  ![scale_gradient_b](resources/scale_gradient_b.png)
+- for "learn rate", *r*, given: ![learn_rate_def](resources/learn_rate_def.png)
+
+<br>
+
+```cpp
+void updateOutputCostDerivative(const fp * label);
 ```
 
-#### Notes on Structure:
+<br>
 
-Given a "full" layer with the following members:
+```cpp
+void updateHiddenLayerCostDerivative(Layer<fp> * lastLayer);
+```
 
-| Symbol | Dim.  | Description |
-|--------|-------|-------------|
-| **W**  |[m x n]| Weights     |
-| **b**  |[m x 1]| Biases      |
-| **x**  |[n x 1]| Input Vector|
-| **z**  |[m x 1]| Weighted Inp|
-| **a**  |[m x 1]| Activations |
+<br>
 
-![weight_matrix](resources/weight_matrix.png)
-
-![weighted_inputs](resources/weighted_inputs.png)
+```cpp
+void applyDerivativeVector(void);
+```

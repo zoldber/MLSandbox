@@ -297,7 +297,7 @@ namespace nnet {
 
             }
 
-            void updateHiddenLayerCostDerivative(Layer<fp> * lastLayer) {
+            void updateHiddenLayerCostDerivative(Layer<fp> * prevLayer) {
 
                 // a generalization of the operation above, performs the following steps:
 
@@ -336,11 +336,11 @@ namespace nnet {
 
                     gradientAgg = 0;
 
-                    for (lastInpNode = 0; lastInpNode < lastLayer->outSize; lastInpNode++) {
+                    for (lastInpNode = 0; lastInpNode < prevLayer->outSize; lastInpNode++) {
 
-                        d_inpWeighted = lastLayer->W[thisNodeInp][lastInpNode];
+                        d_inpWeighted = prevLayer->W[thisNodeInp][lastInpNode];
 
-                        gradientAgg += (d_inpWeighted * lastLayer->gradient->backPropVector[lastInpNode]);
+                        gradientAgg += (d_inpWeighted * prevLayer->gradient->backPropVector[lastInpNode]);
 
                     }
 
