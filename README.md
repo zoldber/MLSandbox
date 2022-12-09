@@ -1,5 +1,5 @@
 # MLSandbox
-## A Collection of Neural Network Primitves and Generic Models Written in C++
+## A Collection of Neural Network Primitives and Generic Models Written in C++
 
 #### Summary:
 

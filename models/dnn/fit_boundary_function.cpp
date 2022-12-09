@@ -37,9 +37,9 @@ int main(void) {
 
     // build network by layer as a vector of 'nnet::layer_t' elements,
     // where type 'nnet::layer_t' defines { layerNeuronCount, layerActivFunc }
-    auto layers = {
+    const auto layers = {
         
-        (nnet::layer_t){ 2, nnet::ActivationTypes::sigmoid  },
+        (nnet::layer_t){ 2, nnet::ActivationTypes::none     },
         (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid  },
         (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid  }     
 

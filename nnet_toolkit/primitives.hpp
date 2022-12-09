@@ -9,7 +9,7 @@
 namespace nnet {    
 
     // { layer size, activation function }
-    typedef struct {size_t n; ActivationTypes afn; } layer_t;
+    typedef struct { size_t n; ActivationTypes afn; } layer_t;
 
     // each gradient simply contains a weight matrix (W), bias vector (b) equal in dim
     // to its corresponding layer during training. The gradient class is isolated from
@@ -30,7 +30,7 @@ namespace nnet {
             fp ** W;
             fp * b;
 
-            Gradient(size_t inp, size_t out) {
+            Gradient(const size_t inp, const size_t out) {
 
                 inpSize = inp;
                 outSize = out;
@@ -94,7 +94,7 @@ namespace nnet {
 
         private:
 
-            fp nodeCost(fp output, fp expected) {
+            fp nodeCost(const fp output, const fp expected) {
 
                 fp error = expected - output;
 
@@ -102,7 +102,7 @@ namespace nnet {
 
             }
 
-            fp d_nodeCost(fp output, fp expected) {
+            fp d_nodeCost(const fp output, const fp expected) {
 
                 return 2.0 * (output - expected);
 
@@ -156,7 +156,7 @@ namespace nnet {
             fp ** W;
             fp * b;
 
-            Layer(size_t inp, size_t out, ActivationTypes afn) {
+            Layer(const size_t inp, const size_t out, const ActivationTypes afn) {
 
                 inpSize = inp;
                 outSize = out;
@@ -211,7 +211,7 @@ namespace nnet {
             // input[], inpWeighted[], and activations[] are allocated outside
             // of this function within the constructor, and the pointer return
             // of fp * evaluate(vals) is 1/2 notational and 1/2 debug-friendly
-            fp * evaluate(fp * input) {
+            fp * evaluate(const fp * input) {
 
                 size_t inpNode, outNode;
 
@@ -240,7 +240,7 @@ namespace nnet {
 
             }
 
-            void applyGradient(fp learnRate) {
+            void applyGradient(const fp learnRate) {
 
                 size_t inpNode, outNode;
 
@@ -260,7 +260,7 @@ namespace nnet {
 
             }
 
-            void updateOutputCostDerivative(fp * label) {
+            void updateOutputCostDerivative(const fp * label) {
 
                 // computes first "backPropVector" from the output layer as the product of
                 // partial derivatives of output layer's cost/actv and actv/inpWeighted
@@ -392,7 +392,7 @@ namespace nnet {
 
             }
 
-            void randomizeWeights(int seed) {
+            void randomizeWeights(const int seed) {
 
                 std::srand(seed);
 
@@ -472,7 +472,7 @@ namespace nnet {
             }
 
             // consider input validation (?)
-            void setLearnRate(fp rate) {
+            void setLearnRate(const fp rate) {
 
                 learnRate = rate;
 
@@ -549,7 +549,7 @@ namespace nnet {
 
             }
 
-            // runs all samples through network and updates weights via
+            // Runs all samples through network and updates weights via
             // exhaustive gradient descent and returns average cost of
             // entire sample set after an iteration of training
             fp fitSimple(fp ** samples, fp ** labels, size_t sampleCount) {
