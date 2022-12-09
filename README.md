@@ -209,3 +209,7 @@ nnet::AddMePl0x(const size_t layerSize, const size_t kernelSize);
 <br>
 
 #### Examples:
+
+```cpp
+
+```
