@@ -1,9 +1,8 @@
 # MLSandbox
 ## A Collection of Neural Network Primitives and Generic Models Written in C++
 
-Known Boundaries | Network Predictions
-- | -
-![boundaries](resources/decision_boundaries.png) | ![boundaries_fit](resources/fit.gif)
+![boundaries_fit](resources/fit.gif)
+![boundaries](resources/decision_boundaries.png)
 
 ## Summary:
 
