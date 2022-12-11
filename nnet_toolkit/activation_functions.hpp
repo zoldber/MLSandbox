@@ -17,6 +17,7 @@ namespace nnet {
         // (whose declared activation function is discarded anyway), and might see
         // use in network debug scripts with direct applicaiton of weights and biases
         none,
+        tanh,
         relu,
         lrelu,
         sigmoid,
@@ -89,6 +90,42 @@ namespace nnet {
         for (size_t i = 0; i < len; i++) {
 
             y[i] = (x[i] < 0.0) ? 0.01 : 1.0;
+
+        }
+
+        return;
+
+    }
+
+    template<typename fp>
+    void _tanh(fp * x, fp * y, size_t len) {
+
+        fp a, b;
+
+        for (size_t i = 0; i < len; i++) {
+
+            a = std::exp(x[i]);
+            b = std::exp(-x[i]);
+
+            y[i] = (a - b) / (a + b);
+
+        }
+
+        return;
+
+    }
+
+    // for f(x) = tanh(x), f'(x) = 1 - f^2(x)
+    template<typename fp>
+    void _d_tanh(fp * x, fp * y, size_t len) {
+
+        _tanh(x, y, len);
+
+        for (size_t i = 0; i < len; i++) {
+
+            y[i] *= -y[i];
+
+            y[i] += 1.0;
 
         }
 
@@ -177,6 +214,11 @@ namespace nnet {
                 this->functionType = type;
 
                 switch(functionType) {
+
+                    case ActivationTypes::tanh:
+                        applyFunc   = &_tanh;
+                        applyDeriv  = &_d_tanh;
+                        break;
 
                     case ActivationTypes::relu:
                         applyFunc   = &_relu;

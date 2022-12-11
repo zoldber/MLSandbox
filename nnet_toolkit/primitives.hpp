@@ -704,13 +704,14 @@ namespace nnet {
 
                 /*  Supported activation functions:
                     none,
+                    tanh,
                     relu,
                     lrelu,
                     sigmoid,
                     fastSigmoid
                 */
 
-                const std::string activationFuncs[5] = {"None", "ReLU", "Leaky ReLU", "Sigmoid", "Fast Sigmoid"};
+                const std::string activationFuncs[6] = {"None", "tanh", "ReLU", "Leaky ReLU", "Sigmoid", "Fast Sigmoid"};
 
                std::cout << "Input\t{   W[  N/A  ], b[  N/A  ]\t} <- " << activationFuncs[0] << "\n"; // first layer (input) has no activation function
 

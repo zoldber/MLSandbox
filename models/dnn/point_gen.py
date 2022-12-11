@@ -20,12 +20,26 @@ X = [xi for xi in range(17)]
 F = list(map(f, X))
 G = list(map(g, X))
 
-# plot boundary functions
-plt.plot(X, F)
-plt.plot(X, G)
+ax = plt.axes(xlim=(0, 16), ylim=(0, 16))
 
+# Plot boundary functions
+ax.plot(X, F)
+ax.plot(X, G)
 
-# generate random points and label by position
+# Fill regions between
+ax.fill_between(X, ([0] * 17), F)
+ax.fill_between(X, G, ([16] * 17))
+ax.fill_between(X, F, G)
+
+ax.set_yticks([0, 4, 8, 12, 16])
+ax.set_ylabel("Input Feature A")
+
+ax.set_xticks([0, 4, 8, 12, 16])
+ax.set_xlabel("Input Feature B")
+
+ax.set_title("Classification Boundaries for Inputs [A, B]")
+
+# Generate random points and label by position
 # relative to the boundary defined above
 listSize = 16000
 
@@ -46,27 +60,13 @@ for _ in range(listSize):
     samples.append([x, y])
     labels.append(label)
 
-if listSize <= 100:
-
-    colors = ['orange', 'green', 'blue']
-
-    numPoints = len(samples)
-
-    for i in range(numPoints):
-
-        plt.scatter(
-                    x=samples[i][0], 
-                    y=samples[i][1],
-                    color=colors[labels[i].index(1.0)]
-                    )
-
 
 # show plot before writing to csv
 plt.show()
 
 with open('test_data/samples.csv', 'w') as f:
     for sample in samples:
-        f.write(f'{sample[0]}, {sample[1]}\n')
+        f.write(f'{sample[0]:.3f}, {sample[1]:.3f}\n')
 
 with open('test_data/labels.csv', 'w') as f:
     for label in labels:
