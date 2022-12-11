@@ -1,6 +1,10 @@
 # MLSandbox
 ## A Collection of Neural Network Primitives and Generic Models Written in C++
 
+Known Boundaries | Network Predictions
+- | -
+![boundaries](resources/decision_boundaries.png) | ![boundaries_fit](resources/fit.gif)
+
 ## Summary:
 
 Basic neural networks implemented with an emphasis on modularity. This project was undertaken after a few years of experience in developing and training abstracted ML models (e.g. Python libs / APIs), and serves to foster a deeper understanding of network elements and training behavior. 
@@ -138,15 +142,15 @@ nnet::Layer(const size_t inp, const size_t out, const ActivationTypes afn);
 
 | Symbol   | Dim.  | Description            | Stored in Sparse Network |
 |----------|-------|------------------------|--------------------------|
-| **W**    |[m x n]| Weights                | Yes
-| **b**    |[m x 1]| Biases                 | Yes
-| **x**    |[n x 1]| Input Vector           | No
-| **z**    |[m x 1]| Weighted Inp. Vector   | TBD
-| **a**    |[m x 1]| Activations (Output)   | Yes
-| **e**    |[m x 1]| Label / Expected Output| No
-| **W~G~** |[m x n]| Gradient Weights       | No
-| **b~G~** |[m x 1]| Gradient Biases        | No
-| **D~BP~**|[m x 1]| Back-Prop. Buffer      | No
+| **W**    | m, n  | Weights                | Yes
+| **b**    | m, 1  | Biases                 | Yes
+| **x**    | n, 1  | Input Vector           | No
+| **z**    | m, 1  | Weighted Inp. Vector   | TBD
+| **a**    | m, 1  | Activations (Output)   | Yes
+| **e**    | m, 1  | Label / Expected Output| No
+| **W~G~** | m, n  | Gradient Weights       | No
+| **b~G~** | m, 1  | Gradient Biases        | No
+| **D~BP~**| m, 1  | Back-Prop. Buffer      | No
 
 Given a "full" layer with dimensions *n* and *m* (input and output size, respectively), 
 the following methods describe the relationship of the member data above:
