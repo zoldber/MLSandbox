@@ -1,14 +1,8 @@
-#include <iostream>
-
-#include <assert.h>
-
-#include <string>
-
 // Data import libraries
 #include "../../../tables/src/tbl_csv.hpp"
 
 // Network libraries
-#include "../../nnet_toolkit/primitives.hpp"
+#include "../../nnet_toolkit/networks.hpp"
 
 // File paths to training features and labels, respectively
 #define TRAIN_PATH "test_data/samples.csv"
