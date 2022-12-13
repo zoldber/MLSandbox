@@ -313,12 +313,20 @@ template<class fp>
 
     };
 
+    // note: this should construct the convolutional stages and append the 
+    // fully connected classifier at the end via the ordinary constructor
     template<class fp>
     class ConvolutionalNetwork : public Network<fp> {
 
         private:
 
         public:
+
+            ConvolutionalNetwork(const std::vector<conv_layer_t> convPoolCfg, const std::vector<layer_t> fullyConnectedCfg){
+
+                
+
+            }
 
     };
 

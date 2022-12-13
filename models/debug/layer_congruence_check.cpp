@@ -1,6 +1,4 @@
-#include <iostream>
-
-#include "../../nnet_toolkit/primitives.hpp"
+#include "../../nnet_toolkit/networks.hpp"
 
 int main(void){
 

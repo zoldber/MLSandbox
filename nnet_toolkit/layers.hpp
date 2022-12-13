@@ -10,10 +10,15 @@
 
 namespace nnet {    
 
+    // Ordinary fully-connected layer 
     // { layer size, activation function }
     typedef struct { size_t n; ActivationTypes afn; } layer_t;
 
-    // each gradient simply contains a weight matrix (W), bias vector (b) equal in dim
+    // Convolutional network layer, paired with a pooling layer by default
+    // { WxH of convolutional layer, WxH of pooling layer }
+    typedef struct { size_t convW; size_t convH; size_t poolW; size_t poolH; ActivationTypes afn; } conv_layer_t;
+
+    // Each gradient simply contains a weight matrix (W), bias vector (b) equal in dim
     // to its corresponding layer during training. The gradient class is isolated from
     // the layer class because the latter need only store its W and b during execution
     template<class fp>

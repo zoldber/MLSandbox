@@ -10,12 +10,11 @@ namespace nnet {
     // softmax in future updates. None of these should be modifying in-place.
 
     enum class ActivationTypes { 
-        
         // First enumeration (0) should correspond to "no activation function"
         // and pass inputs unchanged: y = f(x) = x and y' = f'(x) = 1.0 for all x.
         // This enables better notation for initializing a network's input layer
         // (whose declared activation function is discarded anyway), and might see
-        // use in network debug scripts with direct applicaiton of weights and biases
+        // use in network debug scripts with direct passing of weighted inputs
         none,
         tanh,
         relu,
@@ -215,6 +214,11 @@ namespace nnet {
 
                 switch(functionType) {
 
+                    case ActivationTypes::none:
+                        applyFunc   = &_none;
+                        applyDeriv  = &_d_none;
+                        break;
+
                     case ActivationTypes::tanh:
                         applyFunc   = &_tanh;
                         applyDeriv  = &_d_tanh;
@@ -229,11 +233,6 @@ namespace nnet {
                         applyFunc   = &_lrelu;
                         applyDeriv  = &_d_lrelu;
                         break;
-
-                    case ActivationTypes::none:
-                        applyFunc   = &_none;
-                        applyDeriv  = &_d_none;
-                        break;
                     
                     case ActivationTypes::sigmoid:
                         applyFunc   = &_sigmoid;
@@ -246,8 +245,10 @@ namespace nnet {
                         break;
 
                     default:
-                        std::cout << "--\tpassed undefined activation function" << std::endl;
-                        std::abort();
+                        
+                        // This isn't a practical case but abort anyway
+                        abort();
+
                         break;
 
                 }
