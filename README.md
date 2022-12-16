@@ -42,16 +42,20 @@ None, as non-STL libraries (with the _possible_ exception of parallelizing libs)
 - [ ] Parallelization templates (likely using OpenMPI) for high-throughput feature-processing applications
 
 - - -
-# Network Topologies and Primitive Structures in nnet \{ }
+## Network Topologies and Primitive Structures in nnet \{ }
 
 > #### Topologies:
->    1. Classic, Fully-Connected Neural Network ("*Standard Network*")
+>    1. Fully-Connected Neural Network
 >    2. Convolutional Neural Network
->    3. 
 >
 > #### Components:
->    1. Gradient-Paired Layer
->    2. Kernel-Paired Layer
+>    1. Activation Object
+>    2. Fully-Connected Layer
+>       2a. Weights and Biases
+>       2b. Gradient
+>    3. Convolutional Layer
+>       3a. 
+
 
 - - -
 

@@ -5,9 +5,8 @@ int main(void){
     // convolutional / pooling layers
     auto cpLayers = {
 
-        (nnet::conv_layer_t){ 28, 28, 14, 14, nnet::ActivationTypes::relu },
-        (nnet::conv_layer_t){ 14, 14,  8,  8, nnet::ActivationTypes::relu },
-        (nnet::conv_layer_t){  8,  8,  3,  3, nnet::ActivationTypes::relu }
+        (nnet::conv_layer_t){ {6, 5, 5}, nnet::ActivationTypes::relu, nnet::PoolingTypes::maxPool },
+        (nnet::conv_layer_t){ {6, 5, 5}, nnet::ActivationTypes::relu, nnet::PoolingTypes::maxPool },
 
     };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "activation_functions.hpp"
+#include "convolution_functions.hpp"
 #include <iostream>
 #include <assert.h>
 #include <cstring>  // supports std::memcpy()
@@ -14,9 +15,9 @@ namespace nnet {
     // { layer size, activation function }
     typedef struct { size_t n; ActivationTypes afn; } layer_t;
 
-    // Convolutional network layer, paired with a pooling layer by default
-    // { WxH of convolutional layer, WxH of pooling layer }
-    typedef struct { size_t convW; size_t convH; size_t poolW; size_t poolH; ActivationTypes afn; } conv_layer_t;
+    // Convolutional network layer, incorporates a pooling layer by default
+    // N-D kernel dimension vector | N > 1 : { ..., w, h }, kernel activation function, pooling function }
+    typedef struct { std::vector<size_t> kernel_dims; ActivationTypes afn; PoolingTypes pfn; } conv_layer_t;
 
     // Each gradient simply contains a weight matrix (W), bias vector (b) equal in dim
     // to its corresponding layer during training. The gradient class is isolated from
@@ -424,10 +425,19 @@ namespace nnet {
             
     };
 
+    // Future implementations might see class: Layer refactored to make this a derived class.
+    // Currently, no clear advantage exists to motivate this change, and sparse layers restricted
+    // to execution are likely going to take on a seperate structure anyway.
     template<class fp>
     class ConvolutionalLayer {
 
         private:
+
+            size_t padding, kernel, stride;
+
+            Activation<fp> * activation;
+
+            Pooling<fp> * pooling;
 
         public:
 

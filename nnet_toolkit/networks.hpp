@@ -324,7 +324,7 @@ template<class fp>
 
             ConvolutionalNetwork(const std::vector<conv_layer_t> convPoolCfg, const std::vector<layer_t> fullyConnectedCfg){
 
-                
+                return;
 
             }
 
