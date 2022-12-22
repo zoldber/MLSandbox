@@ -15,10 +15,10 @@ Basic neural networks implemented with an emphasis on modularity. This project w
 ### Some Noteworthy Points on Design Philosophy
 
 #### 1. Interfacing and Abstraction
-Feeding sample features to a model or assigning parameters should be as discrete as possible, and prioritize interoperability. Network interfacing will generally avoid the use of classes or structs that wrap (and obfuscate) data. All models *and* network components should output a vector of activation values as an array of ordinary type, or, at most, a scalar result derived with minimal complexity (e.g. a max or a min activation value within the prediction vector). _The general aim of these models is explicit interfacing with primitive blocks and data structures, as opposed to abstracting them for brevity_.
+Feeding sample features to a model or assigning parameters should be as discrete as possible, and prioritize interoperability. All models *and* network components should output a vector of activation values as an array of ordinary type, or, at most, a scalar result derived with minimal complexity (e.g. a max or a min activation value within the prediction vector). _The general aim of these models is explicit interfacing with primitive blocks and data structures, as opposed to abstracting them for brevity_.
 
 #### 2. Use of Templates
-Models, network components, and primitives implement a universal generic denoted **fp** (for "floating point") through the use of hierarchical templates. Precision and performance of a model are largely defined by the representation of the floating point values therein, and specific applications will often warrant the use of a long double over a float, etc.
+Models, network components, and primitives implement a generic denoted **fp** (for "floating point") through the use of hierarchical templates. Precision and performance of a model are largely defined by the representation of the floating point values therein, and specific applications will often warrant the use of a long double over a float, etc.
 
 #### 3. Dependencies
 None, as non-STL libraries (with the _possible_ exception of parallelizing libs) are avoided entirely. It's worth noting that many network demos in this repo will include custom headers for importing data. This minimizes distraction from network-specific code blocks in the demo program, and all reads are cast as ordinary arrays before being fed into a network. I've also made the repo of each custom import header public for ease of debugging / convenience / reference etc.
