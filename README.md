@@ -120,6 +120,31 @@ auto label = classifier->predict(sample);
 <br>
 
 #### Examples:
+
+```cpp
+// An instance of conv_layer_t describes a convolutional layer object for the network constructor with:
+// { N-dimensional vector describing convolution kernel, conv. activation function, pooling function }
+// The actual convolutional layer class, nnet::ConvolutionalLayer, handles convolution and pooling.
+const auto cpLayers = {
+
+    (nnet::conv_layer_t){ {6, 5, 5}, nnet::ActivationTypes::relu, nnet::PoolingTypes::maxPool },
+    (nnet::conv_layer_t){ {6, 5, 5}, nnet::ActivationTypes::relu, nnet::PoolingTypes::maxPool },
+
+};
+
+// Fully connected layers that handle classification.
+const auto fcLayers = {
+
+    (nnet::layer_t){ 2, nnet::ActivationTypes::relu    },
+    (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid },
+    (nnet::layer_t){ 5, nnet::ActivationTypes::sigmoid },
+    (nnet::layer_t){ 3, nnet::ActivationTypes::sigmoid }
+
+};
+
+auto classifier = new nnet::ConvolutionalNetwork<float>(cpLayers, fcLayers);
+```
+
 <br>
 
 #### Constructors:
