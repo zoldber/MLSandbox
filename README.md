@@ -51,9 +51,12 @@ None, as non-STL libraries (with the _possible_ exception of parallelizing libs)
 > #### Components:
 >    1. Activation Object
 >    2. Fully-Connected Layer
+>    
 >       2a. Weights and Biases
 >       2b. Gradient
+>       
 >    3. Convolutional Layer
+>    
 >       3a. 
 
 
