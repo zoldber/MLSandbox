@@ -52,12 +52,27 @@ None, as non-STL libraries (with the _possible_ exception of parallelizing libs)
 >    1. Activation Object
 >    2. Fully-Connected Layer
 >    
->       2a. Weights and Biases
->       2b. Gradient
+>       2a. Weights 
+>       
+>       2b. Biases
+>
+>       2c. Activation Function
+>   
+>       2d. Gradient Corresponding to Weights, Biases
 >       
 >    3. Convolutional Layer
 >    
->       3a. 
+>       3a. Convolutional kernel
+>
+>       3b. Biases
+>
+>       3c. Activation Function
+>
+>       3d. Pooling Matrix
+>
+>       3e. Pooling Function
+
+
 
 
 - - -
